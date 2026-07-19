@@ -16,7 +16,9 @@ import { Form } from "~/components/primitives/Form";
 
 const WorkspaceSetup = ({ onBack }: { onBack?: () => void }) => {
   const { t } = useTranslation();
-  const fullNameHint = t("Введите фамилию, имя и отчество через пробел");
+  const fullNameHint = t(
+    "Пишите ФИО через пробел: фамилия имя отчество"
+  );
 
   return (
     <Background>
