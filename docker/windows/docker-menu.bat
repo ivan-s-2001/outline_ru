@@ -16,8 +16,7 @@ echo  6. Логи Outline
 echo  7. Резервная копия базы
 echo  8. Восстановить базу
 echo  9. Обновить репозиторий и контейнеры
-echo 10. Создать первого администратора
-echo 11. Полный сброс с удалением данных
+echo 10. Полный сброс с удалением данных
 echo  0. Выход
 echo ==========================================================
 set "ACTION="
@@ -32,8 +31,7 @@ if "%ACTION%"=="6" call "%~dp0docker-logs.bat"
 if "%ACTION%"=="7" call "%~dp0docker-backup.bat"
 if "%ACTION%"=="8" call "%~dp0docker-restore.bat"
 if "%ACTION%"=="9" call "%~dp0docker-update.bat"
-if "%ACTION%"=="10" call "%~dp0docker-create-admin.bat"
-if "%ACTION%"=="11" call "%~dp0docker-reset.bat"
+if "%ACTION%"=="10" call "%~dp0docker-reset.bat"
 if "%ACTION%"=="0" exit /b 0
 
 goto :menu
