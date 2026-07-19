@@ -67,7 +67,7 @@ describe("installation.create", () => {
     expect(res.status).toEqual(400);
     const body = await res.json();
     expect(body.message).toContain(
-      "Введите фамилию, имя и отчество через пробел"
+      "Пишите ФИО через пробел: фамилия имя отчество"
     );
   });
 });
