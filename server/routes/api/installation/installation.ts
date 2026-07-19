@@ -1,6 +1,7 @@
 import Router from "koa-router";
 import { Client, UserRole } from "@shared/types";
 import slugify from "@shared/utils/slugify";
+import { normalizeUserName } from "@shared/utils/userName";
 import teamCreator from "@server/commands/teamCreator";
 import { ValidationError } from "@server/errors";
 import auth from "@server/middlewares/authentication";
@@ -36,7 +37,7 @@ router.post(
     });
 
     const user = await User.createWithCtx(ctx, {
-      name: userName,
+      name: normalizeUserName(userName),
       email: userEmail,
       teamId: team.id,
       role: UserRole.Admin,
