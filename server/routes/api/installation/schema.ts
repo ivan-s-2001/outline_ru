@@ -14,7 +14,7 @@ export const InstallationCreateSchema = BaseSchema.extend({
       .min(1)
       .max(UserValidation.maxNameLength)
       .refine(isCompleteUserName, {
-        error: "Введите фамилию, имя и отчество через пробел",
+        error: "Пишите ФИО через пробел: фамилия имя отчество",
       }),
     /** User email */
     userEmail: z.email().max(UserValidation.maxEmailLength),
