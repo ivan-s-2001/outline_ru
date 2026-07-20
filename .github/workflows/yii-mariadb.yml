@@ -1,19 +1,18 @@
 name: Yii MariaDB
 
 on:
-  push:
-    branches:
-      - agent/yii-mariadb-full-outline
-    paths:
-      - "php-backend/**"
-      - ".github/workflows/yii-mariadb.yml"
   pull_request:
     paths:
       - "php-backend/**"
       - ".github/workflows/yii-mariadb.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: yii-mariadb-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   php:
@@ -60,7 +59,20 @@ jobs:
         run: composer validate --strict
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p runtime
+          composer install --no-interaction --prefer-dist --no-progress 2>&1 | tee runtime/composer-install.log
+
+      - name: Upload Composer diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yii-mariadb-composer-${{ github.run_id }}
+          path: php-backend/runtime/composer-install.log
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Lint PHP
         run: composer lint
