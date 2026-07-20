@@ -15,8 +15,7 @@ final class DocumentService
 {
     public function save(Document $document, User $user): Document
     {
-        $isNew = $document->isNewRecord;
-        if ($isNew) {
+        if ($document->isNewRecord) {
             $document->workspace_id = $user->workspace_id;
             $document->created_by_id = $user->id;
             $document->revision_number = 0;
@@ -36,6 +35,7 @@ final class DocumentService
             $revision->title = $document->title;
             $revision->content_json = $document->content_json;
             $revision->content_text = $document->content_text;
+            $revision->yjs_state = $document->yjs_state;
             $revision->revision_number = $document->revision_number;
 
             if (!$revision->save()) {
