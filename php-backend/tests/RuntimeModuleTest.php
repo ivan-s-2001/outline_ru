@@ -8,6 +8,7 @@ use app\models\Revision;
 use app\models\Template;
 use app\services\AttachmentStorage;
 use app\services\DocumentExportService;
+use app\services\DownloadFilename;
 use PHPUnit\Framework\TestCase;
 use Yii;
 
@@ -137,10 +138,9 @@ final class RuntimeModuleTest extends TestCase
 
     public function testExportFilenameIsWindowsSafe(): void
     {
-        $document = new Document(['title' => 'Отчёт: тест / 20?']);
         self::assertSame(
             'Отчёт- тест - 20-.md',
-            (new DocumentExportService())->safeFilename($document, 'md')
+            DownloadFilename::fromTitle('Отчёт: тест / 20?', 'md')
         );
     }
 
