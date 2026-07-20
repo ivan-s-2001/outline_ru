@@ -7,6 +7,7 @@ use app\components\AuthenticatedController;
 use app\models\Document;
 use app\services\DocumentExportService;
 use app\services\PermissionService;
+use Yii;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
@@ -39,7 +40,7 @@ final class ExportController extends AuthenticatedController
             default => throw new NotFoundHttpException('Формат экспорта не поддерживается.'),
         };
 
-        return $this->response->sendContentAsFile(
+        return Yii::$app->response->sendContentAsFile(
             $content,
             $export->safeFilename($document, $extension),
             ['mimeType' => $mime, 'inline' => false]
