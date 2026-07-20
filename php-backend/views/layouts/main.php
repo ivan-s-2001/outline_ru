@@ -54,9 +54,11 @@ $notificationLabel = 'Уведомления' . ($unreadNotifications > 0 ? ' ('
             <a class="nav-link <?= str_starts_with($route, 'template/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/template/index']) ?>">Шаблоны</a>
             <a class="nav-link <?= str_starts_with($route, 'search/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/search/index']) ?>">Поиск</a>
             <a class="nav-link <?= str_starts_with($route, 'api-key/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/api-key/index']) ?>">API-ключи</a>
-            <a class="nav-link text-body" href="#">График</a>
-            <a class="nav-link text-body" href="#">Отпуска</a>
-            <a class="nav-link text-body" href="#">Дежурства</a>
+
+            <div class="small text-uppercase text-body-secondary fw-semibold mt-4 mb-1 px-2">Персонал</div>
+            <a class="nav-link <?= str_starts_with($route, 'schedule/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/schedule/index', 'view' => 'week']) ?>">График</a>
+            <a class="nav-link <?= str_starts_with($route, 'vacation/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/vacation/index']) ?>">Отпуска</a>
+            <a class="nav-link <?= str_starts_with($route, 'duty/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/duty/index']) ?>">Дежурства</a>
 
             <?php if ($currentUser?->isAdmin()): ?>
                 <div class="small text-uppercase text-body-secondary fw-semibold mt-4 mb-1 px-2">Администрирование</div>
@@ -110,6 +112,10 @@ $notificationLabel = 'Уведомления' . ($unreadNotifications > 0 ? ' ('
             <a class="nav-link" href="<?= Url::to(['/template/index']) ?>">Шаблоны</a>
             <a class="nav-link" href="<?= Url::to(['/search/index']) ?>">Поиск</a>
             <a class="nav-link" href="<?= Url::to(['/api-key/index']) ?>">API-ключи</a>
+            <hr>
+            <a class="nav-link" href="<?= Url::to(['/schedule/index', 'view' => 'week']) ?>">График</a>
+            <a class="nav-link" href="<?= Url::to(['/vacation/index']) ?>">Отпуска</a>
+            <a class="nav-link" href="<?= Url::to(['/duty/index']) ?>">Дежурства</a>
             <?php if ($currentUser?->isAdmin()): ?>
                 <hr>
                 <a class="nav-link" href="<?= Url::to(['/user/index']) ?>">Пользователи</a>
