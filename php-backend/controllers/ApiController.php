@@ -1,12 +1,13 @@
 <?php
 
 declare(strict_types=1);
-
 namespace app\controllers;
 
+use app\models\ApiKey;
 use app\models\Document;
 use app\models\forms\InstallForm;
 use app\models\User;
+use app\services\ApiKeyService;
 use app\services\AuthService;
 use app\services\PermissionService;
 use Firebase\JWT\JWT;
@@ -23,6 +24,7 @@ use yii\web\UnauthorizedHttpException;
 final class ApiController extends Controller
 {
     public $enableCsrfValidation = false;
+    private ?ApiKey $authenticatedApiKey = null;
 
     public function beforeAction($action): bool
     {
@@ -140,7 +142,16 @@ final class ApiController extends Controller
 
     private function authInfo(): array
     {
-        return ['data' => $this->presentUser($this->requireUser())];
+        $data = $this->presentUser($this->requireUser());
+        if ($this->authenticatedApiKey) {
+            $data['apiKey'] = [
+                'id' => $this->authenticatedApiKey->id,
+                'name' => $this->authenticatedApiKey->name,
+                'permission' => $this->authenticatedApiKey->permission,
+                'prefix' => $this->authenticatedApiKey->token_prefix,
+            ];
+        }
+        return ['data' => $data];
     }
 
     private function authConfig(): array
@@ -157,6 +168,7 @@ final class ApiController extends Controller
                 'loginField' => 'login',
                 'magicLinkAuthEnabled' => false,
                 'oidcAuthEnabled' => false,
+                'apiKeyAuthEnabled' => true,
             ],
         ];
     }
@@ -185,7 +197,8 @@ final class ApiController extends Controller
 
         $permissions = new PermissionService();
         $canRead = $permissions->canReadDocument($user, $document);
-        $canUpdate = $permissions->canUpdateDocument($user, $document);
+        $apiKeyAllowsWrite = $this->authenticatedApiKey === null || $this->authenticatedApiKey->canWrite();
+        $canUpdate = $permissions->canUpdateDocument($user, $document) && $apiKeyAllowsWrite;
         if (!$canRead) {
             throw new ForbiddenHttpException('Нет доступа к документу');
         }
@@ -208,18 +221,30 @@ final class ApiController extends Controller
             'color' => $user->color,
             'canRead' => $canRead,
             'canUpdate' => $canUpdate,
+            'apiKeyId' => $this->authenticatedApiKey?->id,
         ], $secret, 'HS256');
 
-        return ['data' => ['token' => $token, 'expiresIn' => 300]];
+        return ['data' => ['token' => $token, 'expiresIn' => 300, 'canUpdate' => $canUpdate]];
     }
 
     private function requireUser(): User
     {
         $identity = Yii::$app->user->identity;
-        if (!$identity instanceof User) {
-            throw new UnauthorizedHttpException('Требуется вход');
+        if ($identity instanceof User) {
+            return $identity;
         }
-        return $identity;
+
+        $authorization = trim((string)Yii::$app->request->headers->get('Authorization', ''));
+        if (preg_match('/^Bearer\s+(.+)$/i', $authorization, $match)) {
+            $authenticated = (new ApiKeyService())->authenticate($match[1]);
+            if ($authenticated) {
+                [$user, $apiKey] = $authenticated;
+                $this->authenticatedApiKey = $apiKey;
+                return $user;
+            }
+        }
+
+        throw new UnauthorizedHttpException('Требуется вход или действующий Bearer API-ключ');
     }
 
     private function presentUser(User $user): array
