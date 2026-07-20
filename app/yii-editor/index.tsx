@@ -8,11 +8,14 @@ import { initReactI18next } from "react-i18next";
 import { render } from "react-dom";
 import { ThemeProvider } from "styled-components";
 import History from "@shared/editor/extensions/History";
-import { richExtensions, withComments } from "@shared/editor/nodes";
+import Comment from "@shared/editor/marks/Comment";
+import Mention from "@shared/editor/nodes/Mention";
+import { richExtensions } from "@shared/editor/nodes";
 import light from "@shared/styles/theme";
 import Editor from "~/editor";
 import type { Editor as EditorHandle } from "~/editor";
 import MultiplayerExtension from "~/editor/extensions/Multiplayer";
+import StandaloneMention from "./StandaloneMention";
 
 void i18n.use(initReactI18next).init({
   lng: "ru",
@@ -76,11 +79,25 @@ type AttachmentResponse = {
   };
 };
 
+type MentionableUser = {
+  id: string;
+  name: string;
+  login: string;
+};
+
+type MentionableUsersResponse = {
+  data: MentionableUser[];
+};
+
 type EditorMountProps = {
   element: HTMLElement;
 };
 
-const coreExtensions = withComments(richExtensions);
+const coreExtensions = [
+  StandaloneMention,
+  Comment,
+  ...richExtensions.filter((extension) => extension !== Mention),
+];
 
 function csrfHeaders(): Record<string, string> {
   const csrfParam = document
@@ -98,6 +115,18 @@ function csrfHeaders(): Record<string, string> {
     "X-CSRF-Token": csrfToken,
     ...(csrfParam ? { [csrfParam]: csrfToken } : {}),
   };
+}
+
+async function getJson<T>(url: string): Promise<T> {
+  const response = await fetch(url, {
+    credentials: "same-origin",
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => undefined);
+    throw new Error(payload?.message ?? `HTTP ${response.status}`);
+  }
+  return response.json() as Promise<T>;
 }
 
 async function postJson<T>(url: string, body: object): Promise<T> {
@@ -147,7 +176,11 @@ async function uploadEditorFile(
     | { message?: string }
     | undefined;
   if (!response.ok || !payload || !("data" in payload)) {
-    throw new Error(payload && "message" in payload ? payload.message : `HTTP ${response.status}`);
+    throw new Error(
+      payload && "message" in payload
+        ? payload.message
+        : `HTTP ${response.status}`
+    );
   }
 
   options?.onProgress?.(1);
@@ -205,13 +238,94 @@ function syncForm(editor: EditorHandle | null) {
   }
 }
 
+function insertUserMention(
+  editor: EditorHandle | null,
+  target: MentionableUser,
+  actorId: string
+) {
+  if (!editor?.schema.nodes.mention || editor.view.state.selection.empty === false) {
+    editor?.view.focus();
+  }
+  if (!editor?.schema.nodes.mention) {
+    return;
+  }
+
+  const node = editor.schema.nodes.mention.create({
+    type: "user",
+    label: target.name,
+    modelId: target.id,
+    actorId,
+    id: crypto.randomUUID(),
+  });
+  const transaction = editor.view.state.tr
+    .replaceSelectionWith(node)
+    .insertText(" ")
+    .scrollIntoView();
+  editor.view.dispatch(transaction);
+  editor.view.focus();
+  syncForm(editor);
+}
+
+function MentionPicker({
+  users,
+  actorId,
+  editorRef,
+}: {
+  users: MentionableUser[];
+  actorId: string;
+  editorRef: React.RefObject<EditorHandle>;
+}) {
+  const [selectedId, setSelectedId] = useState("");
+  const selected = users.find((candidate) => candidate.id === selectedId);
+
+  return (
+    <div className="d-flex flex-wrap align-items-center gap-2 border-bottom pb-3 mb-3">
+      <label className="small fw-semibold mb-0" htmlFor="yii-mention-user">
+        Упомянуть
+      </label>
+      <select
+        id="yii-mention-user"
+        className="form-select form-select-sm"
+        style={{ maxWidth: 320 }}
+        value={selectedId}
+        onChange={(event) => setSelectedId(event.target.value)}
+      >
+        <option value="">Выберите пользователя</option>
+        {users.map((candidate) => (
+          <option key={candidate.id} value={candidate.id}>
+            {candidate.name} (@{candidate.login})
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        className="btn btn-outline-secondary btn-sm"
+        disabled={!selected}
+        onClick={() => {
+          if (!selected) {
+            return;
+          }
+          insertUserMention(editorRef.current, selected, actorId);
+          setSelectedId("");
+        }}
+      >
+        Вставить @
+      </button>
+    </div>
+  );
+}
+
 function LocalEditor({ element }: EditorMountProps) {
   const editorRef = useRef<EditorHandle>(null);
   const readOnly = element.dataset.editorMode === "read";
   const defaultValue = useMemo(() => parseContent(element), [element]);
 
   useEffect(() => {
-    setStatus(element, readOnly ? "Просмотр" : "Локальный редактор", "secondary");
+    setStatus(
+      element,
+      readOnly ? "Просмотр" : "Локальный редактор",
+      "secondary"
+    );
   }, [element, readOnly]);
 
   return (
@@ -230,11 +344,11 @@ function LocalEditor({ element }: EditorMountProps) {
       }}
       onChange={() => syncForm(editorRef.current)}
       onClickLink={(href, event) => {
-        if (event.metaKey || event.ctrlKey || event.shiftKey) {
+        if (event?.metaKey || event?.ctrlKey || event?.shiftKey) {
           return;
         }
         if (href.startsWith("/")) {
-          event.preventDefault();
+          event?.preventDefault();
           window.location.assign(href);
         }
       }}
@@ -247,6 +361,7 @@ function CollaborativeEditor({ element }: EditorMountProps) {
   const documentId = element.dataset.documentId ?? "";
   const readOnlyPage = element.dataset.editorMode === "read";
   const [user, setUser] = useState<AuthUser>();
+  const [mentionableUsers, setMentionableUsers] = useState<MentionableUser[]>([]);
   const [provider, setProvider] = useState<HocuspocusProvider>();
   const [document] = useState(() => new Y.Doc());
   const [canUpdate, setCanUpdate] = useState(!readOnlyPage);
@@ -259,18 +374,20 @@ function CollaborativeEditor({ element }: EditorMountProps) {
     const connect = async () => {
       setStatus(element, "Подключение…", "warning");
 
-      const [auth, collaboration] = await Promise.all([
+      const [auth, collaboration, mentionables] = await Promise.all([
         postJson<AuthResponse>("/api/auth.info", {}),
         postJson<CollaborationTokenResponse>(
           "/api/auth.collaborationToken",
           { documentId }
         ),
+        getJson<MentionableUsersResponse>("/mention/users"),
       ]);
       if (disposed) {
         return;
       }
 
       setUser(auth.data);
+      setMentionableUsers(mentionables.data);
       setCanUpdate(!readOnlyPage && collaboration.data.canUpdate !== false);
       localProvider = new IndexeddbPersistence(`document.${documentId}`, document);
 
@@ -289,7 +406,9 @@ function CollaborativeEditor({ element }: EditorMountProps) {
       remoteProvider.on("status", ({ status }) => {
         setStatus(
           element,
-          status === "connected" ? "Совместное редактирование" : "Переподключение…",
+          status === "connected"
+            ? "Совместное редактирование"
+            : "Переподключение…",
           status === "connected" ? "success" : "warning"
         );
       });
@@ -345,32 +464,43 @@ function CollaborativeEditor({ element }: EditorMountProps) {
   }
 
   return (
-    <Editor
-      ref={editorRef}
-      defaultValue={parseContent(element)}
-      extensions={extensions}
-      embeds={[]}
-      readOnly={readOnlyPage || !canUpdate}
-      canUpdate={canUpdate}
-      canComment
-      userId={user.id}
-      uploadFile={(file, options) => uploadEditorFile(file, documentId, options)}
-      placeholder="Введите / для вставки блока или начните писать…"
-      onInit={() => {
-        hideFallback();
-        syncForm(editorRef.current);
-      }}
-      onChange={() => syncForm(editorRef.current)}
-      onClickLink={(href, event) => {
-        if (event.metaKey || event.ctrlKey || event.shiftKey) {
-          return;
+    <>
+      {!readOnlyPage && canUpdate && (
+        <MentionPicker
+          users={mentionableUsers}
+          actorId={user.id}
+          editorRef={editorRef}
+        />
+      )}
+      <Editor
+        ref={editorRef}
+        defaultValue={parseContent(element)}
+        extensions={extensions}
+        embeds={[]}
+        readOnly={readOnlyPage || !canUpdate}
+        canUpdate={canUpdate}
+        canComment
+        userId={user.id}
+        uploadFile={(file, options) =>
+          uploadEditorFile(file, documentId, options)
         }
-        if (href.startsWith("/")) {
-          event.preventDefault();
-          window.location.assign(href);
-        }
-      }}
-    />
+        placeholder="Введите / для вставки блока или начните писать…"
+        onInit={() => {
+          hideFallback();
+          syncForm(editorRef.current);
+        }}
+        onChange={() => syncForm(editorRef.current)}
+        onClickLink={(href, event) => {
+          if (event?.metaKey || event?.ctrlKey || event?.shiftKey) {
+            return;
+          }
+          if (href.startsWith("/")) {
+            event?.preventDefault();
+            window.location.assign(href);
+          }
+        }}
+      />
+    </>
   );
 }
 
