@@ -10,6 +10,7 @@ use yii\helpers\Url;
 
 /** @var Document $model */
 /** @var Revision[] $revisions */
+/** @var bool $canUpdate */
 $this->title = $model->title ?: 'Без названия';
 $contentJson = Json::encode($model->getContentData());
 ?>
@@ -26,10 +27,12 @@ $contentJson = Json::encode($model->getContentData());
                 Ревизия <?= Html::encode((string)$model->revision_number) ?> · обновлено <?= Html::encode((string)$model->updated_at) ?>
             </div>
         </div>
-        <div class="d-flex flex-wrap gap-2">
-            <a class="btn btn-outline-secondary" href="<?= Url::to(['/document/update', 'id' => $model->id]) ?>">Редактировать</a>
-            <a class="btn btn-primary" href="<?= Url::to(['/document/create', 'parentId' => $model->id, 'collectionId' => $model->collection_id]) ?>">Дочерний документ</a>
-        </div>
+        <?php if ($canUpdate): ?>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-outline-secondary" href="<?= Url::to(['/document/update', 'id' => $model->id]) ?>">Редактировать</a>
+                <a class="btn btn-primary" href="<?= Url::to(['/document/create', 'parentId' => $model->id, 'collectionId' => $model->collection_id]) ?>">Дочерний документ</a>
+            </div>
+        <?php endif; ?>
     </div>
 
     <div class="row g-4">
@@ -83,9 +86,11 @@ $contentJson = Json::encode($model->getContentData());
                 </div>
             </div>
 
-            <?= Html::beginForm(['/document/archive', 'id' => $model->id], 'post', ['data-confirm' => 'Переместить документ в архив?']) ?>
-            <?= Html::submitButton('Архивировать документ', ['class' => 'btn btn-outline-danger btn-sm w-100']) ?>
-            <?= Html::endForm() ?>
+            <?php if ($canUpdate): ?>
+                <?= Html::beginForm(['/document/archive', 'id' => $model->id], 'post', ['data-confirm' => 'Переместить документ в архив?']) ?>
+                <?= Html::submitButton('Архивировать документ', ['class' => 'btn btn-outline-danger btn-sm w-100']) ?>
+                <?= Html::endForm() ?>
+            <?php endif; ?>
         </aside>
     </div>
 </div>
