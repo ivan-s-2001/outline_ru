@@ -59,6 +59,12 @@ await build({
   minify: false,
   sourcemap: true,
   legalComments: "none",
+  loader: {
+    ".css": "empty",
+    ".woff": "empty",
+    ".woff2": "empty",
+    ".ttf": "empty",
+  },
   define: {
     "process.env.NODE_ENV": JSON.stringify("production"),
   },
