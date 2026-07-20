@@ -1,0 +1,72 @@
+name: Yii MariaDB
+
+on:
+  push:
+    branches:
+      - agent/yii-mariadb-full-outline
+    paths:
+      - "php-backend/**"
+      - ".github/workflows/yii-mariadb.yml"
+  pull_request:
+    paths:
+      - "php-backend/**"
+      - ".github/workflows/yii-mariadb.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: outline
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    defaults:
+      run:
+        working-directory: php-backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: ctype, json, mbstring, pdo, pdo_mysql
+          coverage: none
+          tools: composer:v2
+
+      - name: Configure environment
+        run: |
+          cp .env.example .env
+          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=root/' .env
+          sed -i 's/^REDIS_ENABLED=.*/REDIS_ENABLED=0/' .env
+
+      - name: Validate Composer metadata
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Lint PHP
+        run: composer lint
+
+      - name: Run MariaDB migrations
+        run: php yii migrate --interactive=0
+
+      - name: Run unit tests
+        run: composer test
