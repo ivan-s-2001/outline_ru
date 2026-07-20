@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace app\controllers;
 
+use app\models\forms\InstallForm;
 use app\models\User;
+use app\services\AuthService;
 use Firebase\JWT\JWT;
-use Throwable;
 use Yii;
 use yii\db\Expression;
 use yii\filters\Cors;
@@ -14,11 +15,18 @@ use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
+use yii\web\Response;
 use yii\web\UnauthorizedHttpException;
 
 final class ApiController extends Controller
 {
     public $enableCsrfValidation = false;
+
+    public function beforeAction($action): bool
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        return parent::beforeAction($action);
+    }
 
     public function behaviors(): array
     {
@@ -72,58 +80,22 @@ final class ApiController extends Controller
         }
 
         $body = $this->body();
-        $workspaceName = $this->requiredString($body, 'workspaceName', 2, 255);
-        $email = mb_strtolower($this->requiredString($body, 'email', 3, 255));
-        $password = $this->requiredString($body, 'password', 10, 1024);
-        [$lastName, $firstName, $middleName] = $this->readFullName($body);
+        $form = new InstallForm();
+        $form->workspaceName = trim((string)($body['workspaceName'] ?? ''));
+        $form->login = mb_strtolower(trim((string)($body['login'] ?? 'admin')));
+        $form->email = mb_strtolower(trim((string)($body['email'] ?? '')));
+        $form->fullName = trim((string)($body['fullName'] ?? $body['name'] ?? $body['userName'] ?? ''));
+        $form->password = (string)($body['password'] ?? '');
+        $form->passwordRepeat = (string)($body['passwordRepeat'] ?? $body['password'] ?? '');
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new BadRequestHttpException('Укажите корректный email');
+        if (!$form->validate()) {
+            throw new BadRequestHttpException($this->firstError($form->getFirstErrors()));
         }
 
-        $workspaceId = $this->uuid();
-        $userId = $this->uuid();
-        $now = gmdate('Y-m-d H:i:s.u');
+        $user = (new AuthService())->install($form);
+        Yii::$app->user->login($user, 30 * 86400);
 
-        $transaction = Yii::$app->db->beginTransaction();
-        try {
-            Yii::$app->db->createCommand()->insert('{{%workspaces}}', [
-                'id' => $workspaceId,
-                'name' => $workspaceName,
-                'default_language' => 'ru_RU',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ])->execute();
-
-            $user = new User();
-            $user->id = $userId;
-            $user->workspace_id = $workspaceId;
-            $user->email = $email;
-            $user->last_name = $lastName;
-            $user->first_name = $firstName;
-            $user->middle_name = $middleName;
-            $user->role = 'owner';
-            $user->status = 'active';
-            $user->auth_key = Yii::$app->security->generateRandomString(64);
-            $user->color = '#4E5C6E';
-            $user->created_at = $now;
-            $user->updated_at = $now;
-            $user->setPassword($password);
-
-            if (!$user->save()) {
-                throw new BadRequestHttpException($this->firstModelError($user));
-            }
-
-            $transaction->commit();
-            Yii::$app->user->login($user, 30 * 86400);
-
-            return ['data' => $this->presentUser($user)];
-        } catch (Throwable $error) {
-            if ($transaction->isActive) {
-                $transaction->rollBack();
-            }
-            throw $error;
-        }
+        return ['data' => $this->presentUser($user)];
     }
 
     private function authLogin(): array
@@ -133,14 +105,18 @@ final class ApiController extends Controller
         }
 
         $body = $this->body();
-        $email = mb_strtolower($this->requiredString($body, 'email', 3, 255));
-        $password = $this->requiredString($body, 'password', 1, 1024);
+        $identity = mb_strtolower(trim((string)($body['login'] ?? $body['email'] ?? '')));
+        $password = (string)($body['password'] ?? '');
         $remember = filter_var($body['remember'] ?? true, FILTER_VALIDATE_BOOL);
-        $user = User::findByEmail($email);
 
+        if (mb_strlen($identity) < 3 || $password === '') {
+            throw new BadRequestHttpException('Укажите логин и пароль');
+        }
+
+        $user = User::findByLoginOrEmail($identity);
         if (!$user || !$user->validatePassword($password)) {
             usleep(300000);
-            throw new UnauthorizedHttpException('Неверный email или пароль');
+            throw new UnauthorizedHttpException('Неверный логин или пароль');
         }
 
         if (!Yii::$app->user->login($user, $remember ? 30 * 86400 : 0)) {
@@ -162,8 +138,7 @@ final class ApiController extends Controller
 
     private function authInfo(): array
     {
-        $user = $this->requireUser();
-        return ['data' => $this->presentUser($user)];
+        return ['data' => $this->presentUser($this->requireUser())];
     }
 
     private function authConfig(): array
@@ -173,10 +148,11 @@ final class ApiController extends Controller
                 'name' => (string)env('APP_NAME', 'Outline'),
                 'providers' => [[
                     'id' => 'password',
-                    'name' => 'Email и пароль',
+                    'name' => 'Логин и пароль',
                     'authUrl' => '/login',
                 ]],
                 'passwordAuthEnabled' => true,
+                'loginField' => 'login',
                 'magicLinkAuthEnabled' => false,
                 'oidcAuthEnabled' => false,
             ],
@@ -187,7 +163,10 @@ final class ApiController extends Controller
     {
         $user = $this->requireUser();
         $body = $this->body();
-        $documentId = $this->requiredString($body, 'documentId', 36, 36);
+        $documentId = trim((string)($body['documentId'] ?? ''));
+        if (!preg_match('/^[0-9a-fA-F-]{36}$/', $documentId)) {
+            throw new BadRequestHttpException('Некорректный идентификатор документа');
+        }
 
         $document = Yii::$app->db->createCommand(
             'SELECT id, workspace_id, collection_id FROM {{%documents}} WHERE id=:id AND deleted_at IS NULL LIMIT 1',
@@ -199,6 +178,11 @@ final class ApiController extends Controller
         }
 
         $now = time();
+        $secret = (string)env('JWT_SECRET', '');
+        if (strlen($secret) < 32) {
+            throw new BadRequestHttpException('JWT_SECRET должен содержать не менее 32 символов');
+        }
+
         $token = JWT::encode([
             'iss' => 'outline-yii-api',
             'aud' => 'outline-collaboration',
@@ -211,7 +195,7 @@ final class ApiController extends Controller
             'color' => $user->color,
             'canRead' => true,
             'canUpdate' => true,
-        ], (string)env('JWT_SECRET', ''), 'HS256');
+        ], $secret, 'HS256');
 
         return ['data' => ['token' => $token, 'expiresIn' => 300]];
     }
@@ -234,6 +218,7 @@ final class ApiController extends Controller
 
         return [
             'id' => $user->id,
+            'login' => $user->login,
             'email' => $user->email,
             'name' => $user->getFullName(),
             'lastName' => $user->last_name,
@@ -260,61 +245,11 @@ final class ApiController extends Controller
         return $body;
     }
 
-    private function requiredString(array $body, string $field, int $min, int $max): string
+    private function firstError(array $errors): string
     {
-        $value = trim((string)($body[$field] ?? ''));
-        $length = mb_strlen($value);
-        if ($length < $min || $length > $max) {
-            throw new BadRequestHttpException(sprintf('Некорректное поле %s', $field));
-        }
-        return $value;
-    }
-
-    private function readFullName(array $body): array
-    {
-        $lastName = trim((string)($body['lastName'] ?? ''));
-        $firstName = trim((string)($body['firstName'] ?? ''));
-        $middleName = trim((string)($body['middleName'] ?? ''));
-
-        if ($lastName === '' || $firstName === '' || $middleName === '') {
-            $parts = preg_split('/\s+/u', trim((string)($body['name'] ?? $body['userName'] ?? ''))) ?: [];
-            if (count($parts) < 3) {
-                throw new BadRequestHttpException('Пишите ФИО через пробел: фамилия имя отчество');
-            }
-            $lastName = (string)array_shift($parts);
-            $firstName = (string)array_shift($parts);
-            $middleName = implode(' ', $parts);
-        }
-
-        foreach ([$lastName, $firstName, $middleName] as $part) {
-            if (mb_strlen($part) > 120) {
-                throw new BadRequestHttpException('Часть ФИО слишком длинная');
-            }
-        }
-
-        return [$lastName, $firstName, $middleName];
-    }
-
-    private function firstModelError(User $model): string
-    {
-        foreach ($model->getFirstErrors() as $error) {
+        foreach ($errors as $error) {
             return (string)$error;
         }
-        return 'Не удалось сохранить пользователя';
-    }
-
-    private function uuid(): string
-    {
-        $bytes = random_bytes(16);
-        $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
-        $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
-        $hex = bin2hex($bytes);
-        return sprintf('%s-%s-%s-%s-%s',
-            substr($hex, 0, 8),
-            substr($hex, 8, 4),
-            substr($hex, 12, 4),
-            substr($hex, 16, 4),
-            substr($hex, 20, 12)
-        );
+        return 'Некорректные данные';
     }
 }
