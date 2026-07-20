@@ -90,10 +90,10 @@ final class OAuthService
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            $code = OAuthAuthorizationCode::find()
-                ->where(['code_hash' => hash('sha256', $rawCode), 'app_id' => $app->id])
-                ->forUpdate()
-                ->one();
+            $code = OAuthAuthorizationCode::findOne([
+                'code_hash' => hash('sha256', $rawCode),
+                'app_id' => $app->id,
+            ]);
             if (!$code || $code->used_at !== null || strtotime((string)$code->expires_at) <= time()) {
                 throw new RuntimeException('OAuth-код недействителен или истёк.');
             }
@@ -101,11 +101,23 @@ final class OAuthService
                 throw new RuntimeException('Redirect URI не совпадает с OAuth-кодом.');
             }
             $this->assertPkce($code, $codeVerifier);
-            $user = User::findOne(['id' => $code->user_id, 'workspace_id' => $app->workspace_id, 'status' => 'active']);
+            $user = User::findOne([
+                'id' => $code->user_id,
+                'workspace_id' => $app->workspace_id,
+                'status' => 'active',
+            ]);
             if (!$user) {
                 throw new RuntimeException('Пользователь OAuth-кода недоступен.');
             }
-            $code->updateAttributes(['used_at' => new Expression('CURRENT_TIMESTAMP(6)')]);
+
+            $claimed = OAuthAuthorizationCode::updateAll(
+                ['used_at' => new Expression('CURRENT_TIMESTAMP(6)')],
+                ['id' => $code->id, 'used_at' => null]
+            );
+            if ($claimed !== 1) {
+                throw new RuntimeException('OAuth-код уже был использован.');
+            }
+
             $issued = $this->createTokens($app, $user, $code->getScopes());
             $transaction->commit();
             return $issued;
@@ -130,22 +142,31 @@ final class OAuthService
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            $existing = OAuthAccessToken::find()
-                ->where([
-                    'app_id' => $app->id,
-                    'refresh_token_hash' => hash('sha256', $rawRefreshToken),
-                    'revoked_at' => null,
-                ])
-                ->forUpdate()
-                ->one();
+            $existing = OAuthAccessToken::findOne([
+                'app_id' => $app->id,
+                'refresh_token_hash' => hash('sha256', $rawRefreshToken),
+                'revoked_at' => null,
+            ]);
             if (!$existing || !$existing->refresh_expires_at || strtotime((string)$existing->refresh_expires_at) <= time()) {
                 throw new RuntimeException('Refresh token недействителен или истёк.');
             }
-            $user = User::findOne(['id' => $existing->user_id, 'workspace_id' => $app->workspace_id, 'status' => 'active']);
+            $user = User::findOne([
+                'id' => $existing->user_id,
+                'workspace_id' => $app->workspace_id,
+                'status' => 'active',
+            ]);
             if (!$user) {
                 throw new RuntimeException('Пользователь OAuth-токена недоступен.');
             }
-            $existing->updateAttributes(['revoked_at' => new Expression('CURRENT_TIMESTAMP(6)')]);
+
+            $claimed = OAuthAccessToken::updateAll(
+                ['revoked_at' => new Expression('CURRENT_TIMESTAMP(6)')],
+                ['id' => $existing->id, 'revoked_at' => null]
+            );
+            if ($claimed !== 1) {
+                throw new RuntimeException('Refresh token уже был использован или отозван.');
+            }
+
             $issued = $this->createTokens($app, $user, $existing->getScopes());
             $transaction->commit();
             return $issued;
@@ -188,8 +209,8 @@ final class OAuthService
     {
         $access = 'oat_' . bin2hex(random_bytes(32));
         $refresh = 'ort_' . bin2hex(random_bytes(32));
-        $expiresIn = (int)env('OAUTH_ACCESS_TOKEN_TTL', 3600);
-        $refreshTtl = (int)env('OAUTH_REFRESH_TOKEN_TTL', 30 * 86400);
+        $expiresIn = max(300, (int)env('OAUTH_ACCESS_TOKEN_TTL', 3600));
+        $refreshTtl = max($expiresIn, (int)env('OAUTH_REFRESH_TOKEN_TTL', 30 * 86400));
         $model = new OAuthAccessToken([
             'id' => BaseRecord::uuid(),
             'app_id' => $app->id,
@@ -217,7 +238,11 @@ final class OAuthService
         if (!$app->is_confidential) {
             return;
         }
-        if (!$secret || !$app->client_secret_hash || !Yii::$app->security->validatePassword($secret, (string)$app->client_secret_hash)) {
+        if (
+            !$secret ||
+            !$app->client_secret_hash ||
+            !Yii::$app->security->validatePassword($secret, (string)$app->client_secret_hash)
+        ) {
             throw new RuntimeException('Неверный OAuth client_secret.');
         }
     }
