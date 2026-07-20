@@ -1,7 +1,6 @@
 <?php
 
 declare(strict_types=1);
-
 use app\assets\AppAsset;
 use app\models\User;
 use yii\helpers\Html;
@@ -36,7 +35,7 @@ $route = Yii::$app->controller->route;
             <a class="nav-link <?= str_starts_with($route, 'site/dashboard') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/site/dashboard']) ?>">Главная</a>
             <a class="nav-link <?= str_starts_with($route, 'collection/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/collection/index']) ?>">Коллекции</a>
             <a class="nav-link <?= str_starts_with($route, 'document/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/document/create']) ?>">Новый документ</a>
-            <a class="nav-link text-body" href="#">Поиск</a>
+            <a class="nav-link <?= str_starts_with($route, 'search/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/search/index']) ?>">Поиск</a>
             <a class="nav-link text-body" href="#">График</a>
             <a class="nav-link text-body" href="#">Отпуска</a>
             <a class="nav-link text-body" href="#">Дежурства</a>
@@ -86,6 +85,7 @@ $route = Yii::$app->controller->route;
             <a class="nav-link" href="<?= Url::to(['/site/dashboard']) ?>">Главная</a>
             <a class="nav-link" href="<?= Url::to(['/collection/index']) ?>">Коллекции</a>
             <a class="nav-link" href="<?= Url::to(['/document/create']) ?>">Новый документ</a>
+            <a class="nav-link" href="<?= Url::to(['/search/index']) ?>">Поиск</a>
             <?php if ($currentUser?->isAdmin()): ?>
                 <hr>
                 <a class="nav-link" href="<?= Url::to(['/user/index']) ?>">Пользователи</a>
