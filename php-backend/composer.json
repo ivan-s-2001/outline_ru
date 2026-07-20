@@ -13,6 +13,11 @@
     "yiisoft/yii2-bootstrap5": "^2.0.51",
     "yiisoft/yii2-redis": "^2.0"
   },
+  "autoload": {
+    "psr-4": {
+      "app\\": ""
+    }
+  },
   "config": {
     "allow-plugins": {
       "yiisoft/yii2-composer": true
