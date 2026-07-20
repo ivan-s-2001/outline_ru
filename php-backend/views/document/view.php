@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use app\assets\EditorAsset;
 use app\models\Comment;
 use app\models\Document;
 use app\models\Revision;
@@ -17,6 +18,11 @@ use yii\helpers\Url;
 /** @var bool $canUpdate */
 $this->title = $model->title ?: 'Без названия';
 $contentJson = Json::encode($model->getContentData());
+$editorJs = Yii::getAlias('@webroot/editor/outline-editor.js');
+$editorCss = Yii::getAlias('@webroot/editor/outline-editor.css');
+if (is_file($editorJs) && is_file($editorCss)) {
+    EditorAsset::register($this);
+}
 ?>
 <div class="document-view-shell">
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
