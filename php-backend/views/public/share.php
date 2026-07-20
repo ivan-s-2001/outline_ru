@@ -36,6 +36,7 @@ if (is_file($editorJs) && is_file($editorCss)) {
                     class="outline-rich-editor"
                     data-document-id="<?= Html::encode($document->id) ?>"
                     data-editor-mode="read"
+                    data-collaboration="false"
                     data-content-json="<?= Html::encode($contentJson) ?>"
                 ></div>
                 <div class="document-rendered-fallback" data-editor-fallback>
