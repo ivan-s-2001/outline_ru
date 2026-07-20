@@ -26,6 +26,7 @@ $items = $documents->getModels();
     </div>
     <?php if ($canUpdate): ?>
         <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-secondary" href="<?= Url::to(['/access/collection', 'id' => $model->id]) ?>">Доступ</a>
             <a class="btn btn-outline-secondary" href="<?= Url::to(['/collection/update', 'id' => $model->id]) ?>">Настройки</a>
             <a class="btn btn-primary" href="<?= Url::to(['/document/create', 'collectionId' => $model->id]) ?>">Новый документ</a>
         </div>
