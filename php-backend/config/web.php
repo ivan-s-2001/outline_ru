@@ -1,7 +1,6 @@
 <?php
 
 declare(strict_types=1);
-
 use app\models\User;
 use yii\caching\FileCache;
 use yii\log\FileTarget;
@@ -52,6 +51,7 @@ $components = [
             'GET,POST login' => 'site/login',
             'POST logout' => 'site/logout',
             'GET dashboard' => 'site/dashboard',
+            'GET search' => 'search/index',
 
             'GET collections' => 'collection/index',
             'GET,POST collections/create' => 'collection/create',
