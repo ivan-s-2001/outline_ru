@@ -1,0 +1,89 @@
+<?php
+
+declare(strict_types=1);
+
+use app\assets\AppAsset;
+use app\models\User;
+use yii\helpers\Html;
+use yii\helpers\Url;
+
+AppAsset::register($this);
+/** @var User|null $currentUser */
+$currentUser = Yii::$app->user->identity instanceof User ? Yii::$app->user->identity : null;
+$route = Yii::$app->controller->route;
+?>
+<?php $this->beginPage() ?>
+<!doctype html>
+<html lang="<?= Html::encode(Yii::$app->language) ?>" data-bs-theme="light">
+<head>
+    <meta charset="<?= Yii::$app->charset ?>">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <?= Html::csrfMetaTags() ?>
+    <title><?= Html::encode($this->title ? $this->title . ' — ' . Yii::$app->name : Yii::$app->name) ?></title>
+    <?php $this->head() ?>
+</head>
+<body class="app-page">
+<?php $this->beginBody() ?>
+<div class="d-flex min-vh-100">
+    <aside class="app-sidebar border-end bg-body-tertiary d-none d-lg-flex flex-column">
+        <div class="p-3 border-bottom">
+            <a class="d-flex align-items-center gap-2 text-decoration-none text-body fw-semibold" href="<?= Url::to(['/site/dashboard']) ?>">
+                <span class="brand-mark brand-mark-sm">O</span>
+                <span><?= Html::encode(Yii::$app->name) ?></span>
+            </a>
+        </div>
+        <nav class="nav nav-pills flex-column gap-1 p-3 flex-grow-1">
+            <a class="nav-link <?= str_starts_with($route, 'site/dashboard') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/site/dashboard']) ?>">Главная</a>
+            <a class="nav-link <?= str_starts_with($route, 'collection/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/collection/index']) ?>">Коллекции</a>
+            <a class="nav-link <?= str_starts_with($route, 'document/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/document/create']) ?>">Новый документ</a>
+            <a class="nav-link text-body" href="#">Поиск</a>
+            <a class="nav-link text-body" href="#">График</a>
+            <a class="nav-link text-body" href="#">Отпуска</a>
+            <a class="nav-link text-body" href="#">Дежурства</a>
+        </nav>
+        <?php if ($currentUser): ?>
+            <div class="p-3 border-top">
+                <div class="small fw-semibold text-truncate"><?= Html::encode($currentUser->getFullName()) ?></div>
+                <div class="small text-body-secondary text-truncate mb-2">@<?= Html::encode($currentUser->login) ?></div>
+                <?= Html::beginForm(['/site/logout'], 'post') ?>
+                <?= Html::submitButton('Выйти', ['class' => 'btn btn-outline-secondary btn-sm w-100']) ?>
+                <?= Html::endForm() ?>
+            </div>
+        <?php endif; ?>
+    </aside>
+
+    <div class="flex-grow-1 min-w-0">
+        <header class="navbar navbar-expand-lg border-bottom bg-body sticky-top px-3">
+            <button class="btn btn-outline-secondary d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">Меню</button>
+            <span class="navbar-brand mb-0 h1 fs-6 text-truncate"><?= Html::encode($this->title ?: Yii::$app->name) ?></span>
+        </header>
+
+        <main class="container-fluid app-content py-4 px-3 px-md-4">
+            <?php foreach (Yii::$app->session->getAllFlashes() as $type => $message): ?>
+                <div class="alert alert-<?= Html::encode($type === 'error' ? 'danger' : $type) ?> alert-dismissible fade show" role="alert">
+                    <?= Html::encode((string)$message) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                </div>
+            <?php endforeach; ?>
+            <?= $content ?>
+        </main>
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+    <div class="offcanvas-header">
+        <h2 class="offcanvas-title h5" id="mobileSidebarLabel"><?= Html::encode(Yii::$app->name) ?></h2>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+    </div>
+    <div class="offcanvas-body">
+        <nav class="nav nav-pills flex-column gap-1">
+            <a class="nav-link" href="<?= Url::to(['/site/dashboard']) ?>">Главная</a>
+            <a class="nav-link" href="<?= Url::to(['/collection/index']) ?>">Коллекции</a>
+            <a class="nav-link" href="<?= Url::to(['/document/create']) ?>">Новый документ</a>
+        </nav>
+    </div>
+</div>
+<?php $this->endBody() ?>
+</body>
+</html>
+<?php $this->endPage() ?>
