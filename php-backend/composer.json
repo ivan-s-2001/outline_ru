@@ -1,0 +1,28 @@
+{
+  "name": "outline/yii-backend",
+  "description": "Yii API backend for the Outline-compatible MariaDB edition",
+  "type": "project",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.2",
+    "ext-json": "*",
+    "ext-pdo": "*",
+    "ext-pdo_mysql": "*",
+    "firebase/php-jwt": "^6.11",
+    "yiisoft/yii2": "^2.0.53",
+    "yiisoft/yii2-redis": "^2.0"
+  },
+  "config": {
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true
+    },
+    "optimize-autoloader": true,
+    "sort-packages": true
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://asset-packagist.org"
+    }
+  ]
+}
