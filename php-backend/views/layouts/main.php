@@ -32,7 +32,7 @@ $route = Yii::$app->controller->route;
                 <span><?= Html::encode(Yii::$app->name) ?></span>
             </a>
         </div>
-        <nav class="nav nav-pills flex-column gap-1 p-3 flex-grow-1">
+        <nav class="nav nav-pills flex-column gap-1 p-3 flex-grow-1 overflow-y-auto">
             <a class="nav-link <?= str_starts_with($route, 'site/dashboard') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/site/dashboard']) ?>">Главная</a>
             <a class="nav-link <?= str_starts_with($route, 'collection/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/collection/index']) ?>">Коллекции</a>
             <a class="nav-link <?= str_starts_with($route, 'document/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/document/create']) ?>">Новый документ</a>
@@ -40,6 +40,11 @@ $route = Yii::$app->controller->route;
             <a class="nav-link text-body" href="#">График</a>
             <a class="nav-link text-body" href="#">Отпуска</a>
             <a class="nav-link text-body" href="#">Дежурства</a>
+
+            <?php if ($currentUser?->isAdmin()): ?>
+                <div class="small text-uppercase text-body-secondary fw-semibold mt-4 mb-1 px-2">Администрирование</div>
+                <a class="nav-link <?= str_starts_with($route, 'group/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/group/index']) ?>">Группы</a>
+            <?php endif; ?>
         </nav>
         <?php if ($currentUser): ?>
             <div class="p-3 border-top">
@@ -80,6 +85,10 @@ $route = Yii::$app->controller->route;
             <a class="nav-link" href="<?= Url::to(['/site/dashboard']) ?>">Главная</a>
             <a class="nav-link" href="<?= Url::to(['/collection/index']) ?>">Коллекции</a>
             <a class="nav-link" href="<?= Url::to(['/document/create']) ?>">Новый документ</a>
+            <?php if ($currentUser?->isAdmin()): ?>
+                <hr>
+                <a class="nav-link" href="<?= Url::to(['/group/index']) ?>">Группы</a>
+            <?php endif; ?>
         </nav>
     </div>
 </div>
