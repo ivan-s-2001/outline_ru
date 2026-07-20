@@ -6,6 +6,7 @@ namespace app\controllers;
 use app\components\AuthenticatedController;
 use app\models\Document;
 use app\services\DocumentExportService;
+use app\services\DownloadFilename;
 use app\services\PermissionService;
 use Yii;
 use yii\web\ForbiddenHttpException;
@@ -42,7 +43,7 @@ final class ExportController extends AuthenticatedController
 
         return Yii::$app->response->sendContentAsFile(
             $content,
-            $export->safeFilename($document, $extension),
+            DownloadFilename::fromTitle((string)$document->title, $extension),
             ['mimeType' => $mime, 'inline' => false]
         );
     }
