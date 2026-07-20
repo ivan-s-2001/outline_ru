@@ -17,6 +17,7 @@ use yii\helpers\Url;
 /** @var bool $canUpdate */
 $this->title = $model->title ?: 'Без названия';
 $contentJson = Json::encode($model->getContentData());
+$collaborationUrl = trim((string)env('COLLABORATION_URL', ''));
 $editorJs = Yii::getAlias('@webroot/editor/outline-editor.js');
 $editorCss = Yii::getAlias('@webroot/editor/outline-editor.css');
 if (is_file($editorJs) && is_file($editorCss)) {
@@ -33,6 +34,7 @@ if (is_file($editorJs) && is_file($editorCss)) {
                     <div id="outline-rich-editor" class="outline-rich-editor"
                          data-document-id="<?= Html::encode($model->id) ?>"
                          data-editor-mode="read"
+                         <?php if ($collaborationUrl !== ''): ?>data-collaboration-url="<?= Html::encode($collaborationUrl) ?>"<?php endif; ?>
                          data-content-json="<?= Html::encode($contentJson) ?>"></div>
                     <div class="document-rendered-fallback" data-editor-fallback>
                         <?php if (trim((string)$model->content_text) === ''): ?>
