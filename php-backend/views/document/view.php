@@ -1,7 +1,6 @@
 <?php
 
 declare(strict_types=1);
-
 use app\assets\EditorAsset;
 use app\models\Comment;
 use app\models\Document;
@@ -37,13 +36,14 @@ if (is_file($editorJs) && is_file($editorCss)) {
                 Ревизия <?= Html::encode((string)$model->revision_number) ?> · обновлено <?= Html::encode((string)$model->updated_at) ?>
             </div>
         </div>
-        <?php if ($canUpdate): ?>
-            <div class="d-flex flex-wrap gap-2">
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-secondary" href="<?= Url::to(['/revision/index', 'documentId' => $model->id]) ?>">История</a>
+            <?php if ($canUpdate): ?>
                 <a class="btn btn-outline-secondary" href="<?= Url::to(['/access/document', 'id' => $model->id]) ?>">Доступ</a>
                 <a class="btn btn-outline-secondary" href="<?= Url::to(['/document/update', 'id' => $model->id]) ?>">Редактировать</a>
                 <a class="btn btn-primary" href="<?= Url::to(['/document/create', 'parentId' => $model->id, 'collectionId' => $model->collection_id]) ?>">Дочерний документ</a>
-            </div>
-        <?php endif; ?>
+            <?php endif; ?>
+        </div>
     </div>
 
     <div class="row g-4">
@@ -93,14 +93,15 @@ if (is_file($editorJs) && is_file($editorCss)) {
                 <div class="card-header bg-body border-0 pt-4 px-4"><h2 class="h6 mb-0">Последние версии</h2></div>
                 <div class="list-group list-group-flush">
                     <?php foreach ($revisions as $revision): ?>
-                        <div class="list-group-item px-4 py-3">
+                        <a class="list-group-item list-group-item-action px-4 py-3" href="<?= Url::to(['/revision/view', 'id' => $revision->id]) ?>">
                             <div class="fw-semibold">Версия <?= Html::encode((string)$revision->revision_number) ?></div>
                             <div class="small text-body-secondary"><?= Html::encode((string)$revision->created_at) ?></div>
-                        </div>
+                        </a>
                     <?php endforeach; ?>
                     <?php if (!$revisions): ?>
                         <div class="list-group-item px-4 py-3 text-body-secondary">Версий пока нет.</div>
                     <?php endif; ?>
+                    <a class="list-group-item list-group-item-action px-4 py-3 text-primary" href="<?= Url::to(['/revision/index', 'documentId' => $model->id]) ?>">Вся история</a>
                 </div>
             </div>
 
