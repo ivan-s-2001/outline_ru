@@ -1,11 +1,16 @@
 import type { Extension, onAuthenticatePayload } from "@hocuspocus/server";
 import { jwtVerify } from "jose";
+import type { RowDataPacket } from "mysql2";
 import { config } from "./config.js";
 import { parseDocumentId, pool } from "./database.js";
 import type { CollaborationContext, CollaborationUser } from "./types.js";
 
 export class AuthenticationExtension implements Extension {
-  async onAuthenticate({ token, documentName, connection }: onAuthenticatePayload): Promise<CollaborationContext> {
+  async onAuthenticate({
+    token,
+    documentName,
+    connection,
+  }: onAuthenticatePayload): Promise<CollaborationContext> {
     if (!token) throw new Error("Authentication required");
     const documentId = parseDocumentId(documentName);
     const { payload } = await jwtVerify(token, config.jwtSecret, {
@@ -28,7 +33,7 @@ export class AuthenticationExtension implements Extension {
       throw new Error("Authorization required");
     }
 
-    const [rows] = await pool.query<mysql.RowDataPacket[]>(
+    const [rows] = await pool.query<RowDataPacket[]>(
       "SELECT id FROM documents WHERE id=? AND workspace_id=? AND deleted_at IS NULL LIMIT 1",
       [documentId, user.workspaceId]
     );
