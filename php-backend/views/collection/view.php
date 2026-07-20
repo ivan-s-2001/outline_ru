@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 use app\models\Collection;
 use app\models\Document;
-use yii\data\ActiveDataProvider;
+use yii\data\BaseDataProvider;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
 /** @var Collection $model */
-/** @var ActiveDataProvider $documents */
+/** @var BaseDataProvider $documents */
+/** @var bool $canUpdate */
 $this->title = $model->name;
 $items = $documents->getModels();
 ?>
@@ -23,10 +24,12 @@ $items = $documents->getModels();
             <p class="text-body-secondary mb-0"><?= Html::encode($model->description ?: 'Без описания') ?></p>
         </div>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-outline-secondary" href="<?= Url::to(['/collection/update', 'id' => $model->id]) ?>">Настройки</a>
-        <a class="btn btn-primary" href="<?= Url::to(['/document/create', 'collectionId' => $model->id]) ?>">Новый документ</a>
-    </div>
+    <?php if ($canUpdate): ?>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-secondary" href="<?= Url::to(['/collection/update', 'id' => $model->id]) ?>">Настройки</a>
+            <a class="btn btn-primary" href="<?= Url::to(['/document/create', 'collectionId' => $model->id]) ?>">Новый документ</a>
+        </div>
+    <?php endif; ?>
 </div>
 
 <div class="card border-0 shadow-sm">
@@ -41,8 +44,12 @@ $items = $documents->getModels();
             <div class="text-center py-5 px-3">
                 <div class="display-6 mb-3">📝</div>
                 <h3 class="h5">Документов пока нет</h3>
-                <p class="text-body-secondary">Создайте первый документ в этой коллекции.</p>
-                <a class="btn btn-primary" href="<?= Url::to(['/document/create', 'collectionId' => $model->id]) ?>">Создать документ</a>
+                <?php if ($canUpdate): ?>
+                    <p class="text-body-secondary">Создайте первый документ в этой коллекции.</p>
+                    <a class="btn btn-primary" href="<?= Url::to(['/document/create', 'collectionId' => $model->id]) ?>">Создать документ</a>
+                <?php else: ?>
+                    <p class="text-body-secondary mb-0">В доступной части коллекции пока нет документов.</p>
+                <?php endif; ?>
             </div>
         <?php else: ?>
             <div class="list-group list-group-flush">
@@ -61,8 +68,10 @@ $items = $documents->getModels();
     </div>
 </div>
 
-<div class="mt-4 border-top pt-4">
-    <?= Html::beginForm(['/collection/archive', 'id' => $model->id], 'post', ['data-confirm' => 'Переместить коллекцию в архив?']) ?>
-    <?= Html::submitButton('Архивировать коллекцию', ['class' => 'btn btn-outline-danger btn-sm']) ?>
-    <?= Html::endForm() ?>
-</div>
+<?php if ($canUpdate): ?>
+    <div class="mt-4 border-top pt-4">
+        <?= Html::beginForm(['/collection/archive', 'id' => $model->id], 'post', ['data-confirm' => 'Переместить коллекцию в архив?']) ?>
+        <?= Html::submitButton('Архивировать коллекцию', ['class' => 'btn btn-outline-danger btn-sm']) ?>
+        <?= Html::endForm() ?>
+    </div>
+<?php endif; ?>
