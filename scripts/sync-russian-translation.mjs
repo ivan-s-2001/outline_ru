@@ -31,14 +31,25 @@ async function ensureReplacement(relativePath, search, replacement, readyCheck) 
     return;
   }
 
-  if (!content.includes(search)) {
+  // Git checkouts on Windows may use CRLF while replacement fragments use LF.
+  // Normalize only for matching, then preserve the file's original line endings.
+  const usesCrlf = content.includes("\r\n");
+  const normalizedContent = content.replace(/\r\n/g, "\n");
+  const normalizedSearch = search.replace(/\r\n/g, "\n");
+  const normalizedReplacement = replacement.replace(/\r\n/g, "\n");
+
+  if (!normalizedContent.includes(normalizedSearch)) {
     throw new Error(
       `Не удалось обновить ${relativePath}: ожидаемый фрагмент не найден. ` +
         "Вероятно, структура новой версии Outline изменилась."
     );
   }
 
-  await write(relativePath, content.replace(search, replacement));
+  const updated = normalizedContent.replace(
+    normalizedSearch,
+    normalizedReplacement
+  );
+  await write(relativePath, usesCrlf ? updated.replace(/\n/g, "\r\n") : updated);
 }
 
 async function connectRussianLocale() {
