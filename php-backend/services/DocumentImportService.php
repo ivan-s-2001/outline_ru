@@ -98,11 +98,16 @@ final class DocumentImportService
                 if ($index < count($lines)) {
                     $index++;
                 }
-                $nodes[] = [
+                $codeText = implode("\n", $code);
+                $node = [
                     'type' => 'code_block',
                     'attrs' => ['language' => $language !== '' ? $language : null],
-                    'content' => [['type' => 'text', 'text' => implode("\n", $code)]],
+                    'content' => [],
                 ];
+                if ($codeText !== '') {
+                    $node['content'][] = ['type' => 'text', 'text' => $codeText];
+                }
+                $nodes[] = $node;
                 continue;
             }
 
@@ -236,21 +241,35 @@ final class DocumentImportService
 
     private function plainText(array $nodes): string
     {
-        $parts = [];
+        $result = '';
         foreach ($nodes as $node) {
             if (!is_array($node)) {
                 continue;
             }
-            if (($node['type'] ?? '') === 'text') {
-                $parts[] = (string)($node['text'] ?? '');
+            $type = (string)($node['type'] ?? '');
+            if ($type === 'text') {
+                $result .= (string)($node['text'] ?? '');
                 continue;
             }
-            $child = is_array($node['content'] ?? null) ? $this->plainText($node['content']) : '';
-            if ($child !== '') {
-                $parts[] = $child;
+            if ($type === 'hard_break') {
+                $result .= "\n";
+                continue;
+            }
+
+            $content = is_array($node['content'] ?? null) ? $node['content'] : [];
+            $child = $this->plainText($content);
+            if ($child === '') {
+                continue;
+            }
+            if ($result !== '' && !str_ends_with($result, "\n")) {
+                $result .= "\n";
+            }
+            $result .= $child;
+            if (!str_ends_with($result, "\n")) {
+                $result .= "\n";
             }
         }
-        return trim(implode("\n", $parts));
+        return trim($result);
     }
 
     private function normalize(string $content): string
