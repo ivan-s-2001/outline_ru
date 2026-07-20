@@ -7,7 +7,7 @@ import type {
 import { Node } from "prosemirror-model";
 import { prosemirrorToYDoc, yDocToProsemirrorJSON } from "y-prosemirror";
 import * as Y from "yjs";
-import { schema } from "@server/editor";
+import { schema } from "@server/editor/index";
 import { findDocument, parseDocumentId, pool } from "./database.js";
 import type { CollaborationContext } from "./types.js";
 
