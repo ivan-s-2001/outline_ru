@@ -46,7 +46,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
-          extensions: ctype, json, mbstring, pdo, pdo_mysql
+          extensions: ctype, dom, json, mbstring, openssl, pdo, pdo_mysql, xml, xmlwriter
           coverage: none
           tools: composer:v2
 
