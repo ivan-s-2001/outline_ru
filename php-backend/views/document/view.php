@@ -33,6 +33,7 @@ $contentJson = Json::encode($model->getContentData());
         </div>
         <?php if ($canUpdate): ?>
             <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-outline-secondary" href="<?= Url::to(['/access/document', 'id' => $model->id]) ?>">Доступ</a>
                 <a class="btn btn-outline-secondary" href="<?= Url::to(['/document/update', 'id' => $model->id]) ?>">Редактировать</a>
                 <a class="btn btn-primary" href="<?= Url::to(['/document/create', 'parentId' => $model->id, 'collectionId' => $model->collection_id]) ?>">Дочерний документ</a>
             </div>
