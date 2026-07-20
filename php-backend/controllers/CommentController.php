@@ -44,16 +44,20 @@ final class CommentController extends AuthenticatedController
             if ($parent->document_id !== $document->id) {
                 throw new BadRequestHttpException('Ответ относится к другому документу.');
             }
+            if ($parent->resolved_at !== null) {
+                throw new BadRequestHttpException('Обсуждение уже завершено.');
+            }
         }
 
+        $post = Yii::$app->request->post();
         $comment = new Comment([
             'workspace_id' => $this->workspaceId(),
             'document_id' => $document->id,
             'parent_comment_id' => $parentId,
             'user_id' => $this->currentUser()->id,
-            'data' => Yii::$app->request->post('data', []),
+            'data' => is_array($post['data'] ?? null) ? $post['data'] : [],
         ]);
-        $comment->load(Yii::$app->request->post());
+        $comment->load($post);
 
         if (!$comment->save()) {
             Yii::$app->session->setFlash('error', $this->firstError($comment->getFirstErrors()));
@@ -69,8 +73,10 @@ final class CommentController extends AuthenticatedController
         $comment = $this->findComment($id);
         $this->assertCanManage($comment);
 
-        $text = trim((string)Yii::$app->request->post('text', Yii::$app->request->post('Comment')['text'] ?? ''));
-        $comment->text = $text;
+        $commentPost = Yii::$app->request->post('Comment', []);
+        $fallbackText = is_array($commentPost) ? ($commentPost['text'] ?? '') : '';
+        $comment->text = trim((string)Yii::$app->request->post('text', $fallbackText));
+
         if (!$comment->save()) {
             Yii::$app->session->setFlash('error', $this->firstError($comment->getFirstErrors()));
         } else {
@@ -85,6 +91,9 @@ final class CommentController extends AuthenticatedController
         $comment = $this->findComment($id);
         $document = $this->findDocument((string)$comment->document_id);
         $permissions = new PermissionService();
+        if (!$permissions->canReadDocument($this->currentUser(), $document)) {
+            throw new ForbiddenHttpException('Нет доступа к документу.');
+        }
         if (
             $comment->user_id !== $this->currentUser()->id &&
             !$permissions->canUpdateDocument($this->currentUser(), $document) &&
@@ -114,6 +123,10 @@ final class CommentController extends AuthenticatedController
 
     private function assertCanManage(Comment $comment): void
     {
+        $document = $this->findDocument((string)$comment->document_id);
+        if (!(new PermissionService())->canReadDocument($this->currentUser(), $document)) {
+            throw new ForbiddenHttpException('Нет доступа к документу.');
+        }
         if ($comment->user_id !== $this->currentUser()->id && !$this->currentUser()->isAdmin()) {
             throw new ForbiddenHttpException('Можно изменять только свои комментарии.');
         }
