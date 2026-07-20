@@ -1,7 +1,6 @@
 <?php
 
 declare(strict_types=1);
-
 namespace app\models;
 
 use JsonException;
@@ -79,6 +78,12 @@ final class Document extends BaseRecord
     {
         return $this->hasMany(self::class, ['parent_document_id' => 'id'])
             ->andWhere(['deleted_at' => null, 'archived_at' => null]);
+    }
+
+    public function getAttachments(): ActiveQuery
+    {
+        return $this->hasMany(Attachment::class, ['document_id' => 'id'])
+            ->orderBy(['created_at' => SORT_DESC]);
     }
 
     public function getCreator(): ActiveQuery
