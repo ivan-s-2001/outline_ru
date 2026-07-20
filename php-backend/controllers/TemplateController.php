@@ -63,16 +63,18 @@ final class TemplateController extends AuthenticatedController
     {
         $this->assertCanCreate();
         $model = new Template([
-            'workspace_id' => $this->workspaceId(),
-            'created_by_id' => $this->currentUser()->id,
-            'updated_by_id' => $this->currentUser()->id,
             'content_json' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]],
             'content_text' => '',
         ]);
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Шаблон создан.');
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($model->load(Yii::$app->request->post())) {
+            $model->workspace_id = $this->workspaceId();
+            $model->created_by_id = $this->currentUser()->id;
+            $model->updated_by_id = $this->currentUser()->id;
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Шаблон создан.');
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
         }
 
         return $this->render('form', [
@@ -85,8 +87,12 @@ final class TemplateController extends AuthenticatedController
     {
         $model = $this->findModel($id);
         $this->assertCanManage($model);
+        $workspaceId = (string)$model->workspace_id;
+        $createdById = (string)$model->created_by_id;
 
         if ($model->load(Yii::$app->request->post())) {
+            $model->workspace_id = $workspaceId;
+            $model->created_by_id = $createdById;
             $model->updated_by_id = $this->currentUser()->id;
             if ($model->save()) {
                 Yii::$app->session->setFlash('success', 'Шаблон обновлён.');
@@ -120,6 +126,8 @@ final class TemplateController extends AuthenticatedController
         ]);
 
         if ($document->load(Yii::$app->request->post())) {
+            $document->content_json = $template->getContentData();
+            $document->content_text = (string)$template->content_text;
             try {
                 $this->validateDocumentRelations($document);
                 (new DocumentService())->save($document, $this->currentUser());
