@@ -22,6 +22,28 @@ return [
     'GET attachments/<id:[0-9a-fA-F-]{36}>' => 'attachment/download',
     'POST attachments/<id:[0-9a-fA-F-]{36}>/delete' => 'attachment/delete',
 
+    'GET schedule' => 'schedule/index',
+    'GET schedule/<view:(?:week|month)>' => 'schedule/index',
+    'GET,POST schedule/shift' => 'schedule/shift',
+    'POST schedule/shifts/<id:[0-9a-fA-F-]{36}>/delete' => 'schedule/delete-shift',
+    'GET,POST schedule/absence' => 'schedule/absence',
+    'GET,POST schedule/adjustment' => 'schedule/adjustment',
+
+    'GET vacations' => 'vacation/index',
+    'GET,POST vacations/create' => 'vacation/create',
+    'GET,POST vacations/allowance' => 'vacation/allowance',
+    'POST vacations/<id:[0-9a-fA-F-]{36}>/cancel' => 'vacation/cancel',
+    'POST vacations/calendar/sync' => 'vacation/sync-calendar',
+
+    'GET duties' => 'duty/index',
+    'GET duties/<id:[0-9a-fA-F-]{36}>' => 'duty/view',
+    'GET,POST duties/create' => 'duty/create',
+    'POST duties/<id:[0-9a-fA-F-]{36}>/participants' => 'duty/add-participant',
+    'POST duties/<id:[0-9a-fA-F-]{36}>/participants/<participantId:[0-9a-fA-F-]{36}>/delete' => 'duty/remove-participant',
+    'POST duties/<id:[0-9a-fA-F-]{36}>/generate' => 'duty/generate',
+    'POST duties/<id:[0-9a-fA-F-]{36}>/swap' => 'duty/swap',
+    'POST duties/<id:[0-9a-fA-F-]{36}>/delete' => 'duty/delete',
+
     'GET collections' => 'collection/index',
     'GET,POST collections/create' => 'collection/create',
     'GET collections/<id:[0-9a-fA-F-]{36}>' => 'collection/view',
