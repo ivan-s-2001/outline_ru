@@ -67,6 +67,8 @@ $notificationLabel = 'Уведомления' . ($unreadNotifications > 0 ? ' ('
                 <div class="small text-uppercase text-body-secondary fw-semibold mt-4 mb-1 px-2">Администрирование</div>
                 <a class="nav-link <?= str_starts_with($route, 'user/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/user/index']) ?>">Пользователи</a>
                 <a class="nav-link <?= str_starts_with($route, 'group/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/group/index']) ?>">Группы</a>
+                <a class="nav-link <?= str_starts_with($route, 'webhook/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/webhook/index']) ?>">Webhooks</a>
+                <a class="nav-link <?= str_starts_with($route, 'oauth-app/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/oauth-app/index']) ?>">OAuth-приложения</a>
                 <a class="nav-link <?= str_starts_with($route, 'audit/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/audit/index']) ?>">Аудит</a>
             <?php endif; ?>
         </nav>
@@ -89,7 +91,7 @@ $notificationLabel = 'Уведомления' . ($unreadNotifications > 0 ? ' ('
 
         <main class="container-fluid app-content py-4 px-3 px-md-4">
             <?php foreach (Yii::$app->session->getAllFlashes() as $type => $message): ?>
-                <?php if ($type === 'apiKeySecret') { continue; } ?>
+                <?php if (in_array($type, ['apiKeySecret', 'webhookSecret', 'oauthClientSecret'], true)) { continue; } ?>
                 <div class="alert alert-<?= Html::encode($type === 'error' ? 'danger' : $type) ?> alert-dismissible fade show" role="alert">
                     <?= Html::encode((string)$message) ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
@@ -126,6 +128,8 @@ $notificationLabel = 'Уведомления' . ($unreadNotifications > 0 ? ' ('
                 <hr>
                 <a class="nav-link" href="<?= Url::to(['/user/index']) ?>">Пользователи</a>
                 <a class="nav-link" href="<?= Url::to(['/group/index']) ?>">Группы</a>
+                <a class="nav-link" href="<?= Url::to(['/webhook/index']) ?>">Webhooks</a>
+                <a class="nav-link" href="<?= Url::to(['/oauth-app/index']) ?>">OAuth-приложения</a>
                 <a class="nav-link" href="<?= Url::to(['/audit/index']) ?>">Аудит</a>
             <?php endif; ?>
         </nav>
