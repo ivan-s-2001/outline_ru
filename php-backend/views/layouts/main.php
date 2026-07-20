@@ -1,7 +1,9 @@
 <?php
 
 declare(strict_types=1);
+
 use app\assets\AppAsset;
+use app\models\Notification;
 use app\models\User;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -10,6 +12,15 @@ AppAsset::register($this);
 /** @var User|null $currentUser */
 $currentUser = Yii::$app->user->identity instanceof User ? Yii::$app->user->identity : null;
 $route = Yii::$app->controller->route;
+$unreadNotifications = $currentUser
+    ? (int)Notification::find()->where([
+        'workspace_id' => $currentUser->workspace_id,
+        'user_id' => $currentUser->id,
+        'read_at' => null,
+        'archived_at' => null,
+    ])->count()
+    : 0;
+$notificationLabel = 'Уведомления' . ($unreadNotifications > 0 ? ' (' . $unreadNotifications . ')' : '');
 ?>
 <?php $this->beginPage() ?>
 <!doctype html>
@@ -35,6 +46,10 @@ $route = Yii::$app->controller->route;
             <a class="nav-link <?= str_starts_with($route, 'site/dashboard') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/site/dashboard']) ?>">Главная</a>
             <a class="nav-link <?= str_starts_with($route, 'collection/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/collection/index']) ?>">Коллекции</a>
             <a class="nav-link <?= str_starts_with($route, 'document/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/document/create']) ?>">Новый документ</a>
+            <a class="nav-link <?= str_starts_with($route, 'notification/') ? 'active' : 'text-body' ?> d-flex justify-content-between align-items-center" href="<?= Url::to(['/notification/index']) ?>">
+                <span>Уведомления</span>
+                <?php if ($unreadNotifications > 0): ?><span class="badge text-bg-primary rounded-pill"><?= $unreadNotifications ?></span><?php endif; ?>
+            </a>
             <a class="nav-link <?= str_starts_with($route, 'import/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/import/document']) ?>">Импорт</a>
             <a class="nav-link <?= str_starts_with($route, 'template/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/template/index']) ?>">Шаблоны</a>
             <a class="nav-link <?= str_starts_with($route, 'search/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/search/index']) ?>">Поиск</a>
@@ -90,6 +105,7 @@ $route = Yii::$app->controller->route;
             <a class="nav-link" href="<?= Url::to(['/site/dashboard']) ?>">Главная</a>
             <a class="nav-link" href="<?= Url::to(['/collection/index']) ?>">Коллекции</a>
             <a class="nav-link" href="<?= Url::to(['/document/create']) ?>">Новый документ</a>
+            <a class="nav-link" href="<?= Url::to(['/notification/index']) ?>"><?= Html::encode($notificationLabel) ?></a>
             <a class="nav-link" href="<?= Url::to(['/import/document']) ?>">Импорт</a>
             <a class="nav-link" href="<?= Url::to(['/template/index']) ?>">Шаблоны</a>
             <a class="nav-link" href="<?= Url::to(['/search/index']) ?>">Поиск</a>
