@@ -10,6 +10,7 @@ return [
     'GET dashboard' => 'site/dashboard',
     'GET search' => 'search/index',
     'GET,POST import' => 'import/document',
+    'GET mention/users' => 'mention/users',
     'GET settings/api-keys' => 'api-key/index',
     'POST settings/api-keys/create' => 'api-key/create',
     'POST settings/api-keys/<id:[0-9a-fA-F-]{36}>/revoke' => 'api-key/revoke',
