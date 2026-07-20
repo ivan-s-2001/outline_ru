@@ -52,6 +52,7 @@ $components = [
             'POST logout' => 'site/logout',
             'GET dashboard' => 'site/dashboard',
             'GET search' => 'search/index',
+            'GET s/<token:[0-9a-f]{64}>' => 'public/share',
 
             'GET collections' => 'collection/index',
             'GET,POST collections/create' => 'collection/create',
@@ -69,6 +70,9 @@ $components = [
             'GET documents/<documentId:[0-9a-fA-F-]{36}>/history' => 'revision/index',
             'GET revisions/<id:[0-9a-fA-F-]{36}>' => 'revision/view',
             'POST revisions/<id:[0-9a-fA-F-]{36}>/restore' => 'revision/restore',
+            'GET documents/<documentId:[0-9a-fA-F-]{36}>/share' => 'share/manage',
+            'POST documents/<documentId:[0-9a-fA-F-]{36}>/share' => 'share/save',
+            'POST shares/<id:[0-9a-fA-F-]{36}>/revoke' => 'share/revoke',
             'GET documents/<id:[0-9a-fA-F-]{36}>/access' => 'access/document',
             'POST documents/<id:[0-9a-fA-F-]{36}>/access/grant' => 'access/grant-document',
             'POST documents/<id:[0-9a-fA-F-]{36}>/access/<permissionId:[0-9a-fA-F-]{36}>/delete' => 'access/revoke-document',
