@@ -1,3 +1,4 @@
+import "./environment.js";
 import http from "node:http";
 import { URL } from "node:url";
 import { Server } from "@hocuspocus/server";
