@@ -78,7 +78,7 @@ MD;
 
         self::assertSame('notes', $result['title']);
         self::assertCount(2, $result['contentJson']['content']);
-        self::assertSame('Первый\n\nВторой', $result['contentText']);
+        self::assertSame("Первый\n\nВторой", $result['contentText']);
     }
 
     public function testRejectsUnknownExtension(): void
