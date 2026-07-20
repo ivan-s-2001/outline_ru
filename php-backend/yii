@@ -1,0 +1,9 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/config/bootstrap.php';
+$config = require __DIR__ . '/config/console.php';
+$application = new yii\console\Application($config);
+exit($application->run());

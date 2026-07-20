@@ -1,0 +1,108 @@
+name: Yii MariaDB
+
+on:
+  pull_request:
+    paths:
+      - "php-backend/**"
+      - ".github/workflows/yii-mariadb.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yii-mariadb-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: outline
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    defaults:
+      run:
+        working-directory: php-backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: ctype, dom, json, mbstring, openssl, pdo, pdo_mysql, xml, xmlwriter
+          coverage: none
+          tools: composer:v2
+
+      - name: Configure environment
+        run: |
+          cp .env.example .env
+          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=root/' .env
+          sed -i 's/^REDIS_ENABLED=.*/REDIS_ENABLED=0/' .env
+
+      - name: Validate Composer metadata
+        run: composer validate --strict
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p runtime
+          composer install --no-interaction --prefer-dist --no-progress 2>&1 | tee runtime/composer-install.log
+
+      - name: Upload Composer diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yii-mariadb-composer-${{ github.run_id }}
+          path: php-backend/runtime/composer-install.log
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: Lint PHP
+        run: composer lint
+
+      - name: Run MariaDB migrations
+        shell: bash
+        run: |
+          set -o pipefail
+          php yii migrate --interactive=0 2>&1 | tee runtime/mariadb-migrate.log
+
+      - name: Upload MariaDB migration diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yii-mariadb-migrate-${{ github.run_id }}
+          path: php-backend/runtime/mariadb-migrate.log
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: Run unit tests
+        shell: bash
+        run: |
+          set -o pipefail
+          composer test 2>&1 | tee runtime/phpunit.log
+
+      - name: Upload PHPUnit diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yii-mariadb-phpunit-${{ github.run_id }}
+          path: php-backend/runtime/phpunit.log
+          if-no-files-found: ignore
+          retention-days: 3

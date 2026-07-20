@@ -1,0 +1,73 @@
+name: Yii Collaboration Bundle
+
+on:
+  pull_request:
+    paths:
+      - "services/yii-collaboration/**"
+      - "server/editor/**"
+      - "shared/editor/**"
+      - "package.json"
+      - "yarn.lock"
+      - ".github/workflows/yii-collaboration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yii-collaboration-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Enable repository Yarn
+        run: corepack enable
+
+      - name: Install original editor schema dependencies
+        run: yarn install --immutable
+
+      - name: Install build-only collaboration dependencies
+        working-directory: services/yii-collaboration
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+
+      - name: Build collaboration runtime
+        working-directory: services/yii-collaboration
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p ../../php-backend/runtime
+          npm run build 2>&1 | tee ../../php-backend/runtime/collaboration-build.log
+
+      - name: Upload collaboration diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yii-collaboration-build-${{ github.run_id }}
+          path: php-backend/runtime/collaboration-build.log
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: Verify runtime
+        run: |
+          test -s php-backend/services/collaboration/dist/collaboration.mjs
+          node --check php-backend/services/collaboration/dist/collaboration.mjs
+          find php-backend/services/collaboration/dist -maxdepth 1 -type f -printf '%p %k KB\n'
+
+      - name: Upload collaboration runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: outline-yii-collaboration-${{ github.sha }}
+          path: php-backend/services/collaboration/dist
+          retention-days: 7

@@ -1,0 +1,110 @@
+name: Yii OSPanel Package
+
+on:
+  pull_request:
+    paths:
+      - "php-backend/**"
+      - "app/yii-editor/**"
+      - "app/editor/**"
+      - "shared/editor/**"
+      - "shared/styles/**"
+      - "services/yii-collaboration/**"
+      - "vite.yii-editor.config.ts"
+      - "package.json"
+      - "yarn.lock"
+      - ".yarnrc.yml"
+      - ".github/workflows/yii-ospanel-package.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yii-ospanel-package-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Enable repository Yarn
+        run: corepack enable
+
+      - name: Install editor dependencies
+        run: yarn install --immutable
+
+      - name: Build standalone editor
+        run: yarn vite build --config vite.yii-editor.config.ts
+
+      - name: Install collaboration build dependencies
+        working-directory: services/yii-collaboration
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+
+      - name: Build collaboration runtime
+        working-directory: services/yii-collaboration
+        run: npm run build
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: ctype, dom, json, mbstring, openssl, pdo, pdo_mysql, xml, xmlwriter
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate Composer metadata
+        working-directory: php-backend
+        run: composer validate --strict
+
+      - name: Install production PHP dependencies
+        working-directory: php-backend
+        run: composer install --no-dev --no-interaction --prefer-dist --no-progress --optimize-autoloader
+
+      - name: Verify production runtime
+        run: |
+          test -s php-backend/web/editor/outline-editor.js
+          test -s php-backend/services/collaboration/dist/collaboration.mjs
+          test -f php-backend/vendor/autoload.php
+          node --check php-backend/services/collaboration/dist/collaboration.mjs
+          php php-backend/yii help >/dev/null
+
+      - name: Assemble OSPanel directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          mkdir -p dist/outline-yii
+          rsync -a \
+            --exclude='.env' \
+            --exclude='runtime/phpunit-cache' \
+            --exclude='runtime/*.log' \
+            php-backend/ dist/outline-yii/
+          mkdir -p \
+            dist/outline-yii/runtime/storage/attachments \
+            dist/outline-yii/web/assets
+          printf '%s\n' \
+            "Outline Yii OSPanel package" \
+            "Commit: $GITHUB_SHA" \
+            "Built: $(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            > dist/outline-yii/BUILD.txt
+          find dist/outline-yii -type f -name '*.log' -delete
+          cd dist
+          zip -q -r outline-yii-ospanel.zip outline-yii
+          ls -lh outline-yii-ospanel.zip
+
+      - name: Upload OSPanel package
+        uses: actions/upload-artifact@v4
+        with:
+          name: outline-yii-ospanel-${{ github.sha }}
+          path: dist/outline-yii-ospanel.zip
+          retention-days: 14
