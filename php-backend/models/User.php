@@ -19,9 +19,9 @@ final class User extends ActiveRecord implements IdentityInterface
     {
         return [
             [['workspace_id', 'email', 'last_name', 'first_name', 'middle_name'], 'required'],
-            [['workspace_id'], 'integer'],
             [['email'], 'email'],
             [['email'], 'unique'],
+            [['id', 'workspace_id'], 'string', 'max' => 36],
             [['last_name', 'first_name', 'middle_name', 'email', 'role', 'status', 'color'], 'string', 'max' => 255],
         ];
     }
@@ -41,9 +41,9 @@ final class User extends ActiveRecord implements IdentityInterface
         return self::findOne(['email' => mb_strtolower(trim($email)), 'status' => 'active']);
     }
 
-    public function getId(): int
+    public function getId(): string
     {
-        return (int)$this->id;
+        return (string)$this->id;
     }
 
     public function getAuthKey(): string
