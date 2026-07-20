@@ -3,9 +3,11 @@
 declare(strict_types=1);
 namespace app\tests;
 
+use app\models\Document;
 use app\models\Revision;
 use app\models\Template;
 use app\services\AttachmentStorage;
+use app\services\DocumentExportService;
 use PHPUnit\Framework\TestCase;
 use Yii;
 
@@ -29,6 +31,10 @@ final class RuntimeModuleTest extends TestCase
         self::assertSame(
             'template/use',
             $routes['GET,POST templates/<id:[0-9a-fA-F-]{36}>/use']
+        );
+        self::assertSame(
+            'export/document',
+            $routes['GET documents/<id:[0-9a-fA-F-]{36}>/export/<format:(?:md|markdown|html|json)>']
         );
     }
 
@@ -70,6 +76,71 @@ final class RuntimeModuleTest extends TestCase
         self::assertSame(
             ['type' => 'doc', 'content' => [['type' => 'paragraph']]],
             $template->getContentData()
+        );
+    }
+
+    public function testMarkdownExportPreservesHeadingsAndMarks(): void
+    {
+        $document = new Document([
+            'title' => 'План релиза',
+            'content_json' => [
+                'type' => 'doc',
+                'content' => [
+                    [
+                        'type' => 'heading',
+                        'attrs' => ['level' => 2],
+                        'content' => [['type' => 'text', 'text' => 'Проверки']],
+                    ],
+                    [
+                        'type' => 'paragraph',
+                        'content' => [[
+                            'type' => 'text',
+                            'text' => 'Готово',
+                            'marks' => [['type' => 'bold']],
+                        ]],
+                    ],
+                ],
+            ],
+        ]);
+
+        $markdown = (new DocumentExportService())->markdown($document);
+        self::assertStringContainsString('# План релиза', $markdown);
+        self::assertStringContainsString('## Проверки', $markdown);
+        self::assertStringContainsString('**Готово**', $markdown);
+    }
+
+    public function testHtmlExportEscapesTextAndUnsafeLinks(): void
+    {
+        $document = new Document([
+            'title' => '<script>alert(1)</script>',
+            'content_json' => [
+                'type' => 'doc',
+                'content' => [[
+                    'type' => 'paragraph',
+                    'content' => [[
+                        'type' => 'text',
+                        'text' => '<b>опасно</b>',
+                        'marks' => [[
+                            'type' => 'link',
+                            'attrs' => ['href' => 'javascript:alert(1)'],
+                        ]],
+                    ]],
+                ]],
+            ],
+        ]);
+
+        $html = (new DocumentExportService())->html($document);
+        self::assertStringNotContainsString('<script>', $html);
+        self::assertStringNotContainsString('javascript:', $html);
+        self::assertStringContainsString('&lt;b&gt;опасно&lt;/b&gt;', $html);
+    }
+
+    public function testExportFilenameIsWindowsSafe(): void
+    {
+        $document = new Document(['title' => 'Отчёт: тест / 20?']);
+        self::assertSame(
+            'Отчёт- тест - 20-.md',
+            (new DocumentExportService())->safeFilename($document, 'md')
         );
     }
 
