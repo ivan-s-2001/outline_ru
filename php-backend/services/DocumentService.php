@@ -1,7 +1,6 @@
 <?php
 
 declare(strict_types=1);
-
 namespace app\services;
 
 use app\models\Document;
@@ -15,7 +14,8 @@ final class DocumentService
 {
     public function save(Document $document, User $user): Document
     {
-        if ($document->isNewRecord) {
+        $created = $document->isNewRecord;
+        if ($created) {
             $document->workspace_id = $user->workspace_id;
             $document->created_by_id = $user->id;
             $document->revision_number = 0;
@@ -43,6 +43,18 @@ final class DocumentService
             }
 
             $transaction->commit();
+            (new AuditService())->record(
+                (string)$document->workspace_id,
+                $created ? 'document.created' : 'document.updated',
+                $user,
+                (string)$document->id,
+                [
+                    'title' => $document->title,
+                    'collectionId' => $document->collection_id,
+                    'parentDocumentId' => $document->parent_document_id,
+                    'revision' => (int)$document->revision_number,
+                ]
+            );
             return $document;
         } catch (Throwable $error) {
             if ($transaction->isActive) {
