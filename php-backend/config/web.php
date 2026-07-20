@@ -63,6 +63,11 @@ $components = [
             'GET documents/<id:[0-9a-fA-F-]{36}>' => 'document/view',
             'GET,POST documents/<id:[0-9a-fA-F-]{36}>/edit' => 'document/update',
             'POST documents/<id:[0-9a-fA-F-]{36}>/archive' => 'document/archive',
+            'POST documents/<documentId:[0-9a-fA-F-]{36}>/comments' => 'comment/create',
+            'POST documents/<documentId:[0-9a-fA-F-]{36}>/comments/<parentId:[0-9a-fA-F-]{36}>/reply' => 'comment/create',
+            'POST comments/<id:[0-9a-fA-F-]{36}>/update' => 'comment/update',
+            'POST comments/<id:[0-9a-fA-F-]{36}>/resolve' => 'comment/resolve',
+            'POST comments/<id:[0-9a-fA-F-]{36}>/delete' => 'comment/delete',
 
             'POST api/<method:[A-Za-z0-9._-]+>' => 'api/dispatch',
             'OPTIONS api/<method:[A-Za-z0-9._-]+>' => 'api/options',
