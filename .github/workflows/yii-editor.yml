@@ -1,0 +1,58 @@
+name: Yii Editor Bundle
+
+on:
+  pull_request:
+    paths:
+      - "app/yii-editor/**"
+      - "app/editor/**"
+      - "shared/editor/**"
+      - "shared/styles/**"
+      - "vite.yii-editor.config.ts"
+      - "package.json"
+      - "yarn.lock"
+      - ".yarnrc.yml"
+      - ".github/workflows/yii-editor.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yii-editor-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: yarn
+
+      - name: Enable repository Yarn
+        run: corepack enable
+
+      - name: Install build dependencies
+        run: yarn install --immutable
+
+      - name: Build standalone editor
+        run: yarn vite build --config vite.yii-editor.config.ts
+
+      - name: Verify bundle
+        run: |
+          test -s php-backend/web/editor/outline-editor.js
+          find php-backend/web/editor -maxdepth 2 -type f -printf '%p %k KB\n'
+
+      - name: Upload editor runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: outline-yii-editor-${{ github.sha }}
+          path: php-backend/web/editor
+          retention-days: 7
