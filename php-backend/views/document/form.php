@@ -16,6 +16,7 @@ $this->title = $title;
 $cancelUrl = $model->isNewRecord
     ? ($model->collection_id ? ['/collection/view', 'id' => $model->collection_id] : ['/site/dashboard'])
     : ['/document/view', 'id' => $model->id];
+$contentJson = Json::encode($model->getContentData());
 ?>
 <div class="document-form-shell">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
@@ -77,7 +78,7 @@ $cancelUrl = $model->isNewRecord
                 class="outline-rich-editor"
                 data-document-id="<?= Html::encode((string)$model->id) ?>"
                 data-editor-mode="edit"
-                data-content-json="<?= Html::encode(Json::htmlEncode($model->content_json ?: ['type' => 'doc', 'content' => []])) ?>"
+                data-content-json="<?= Html::encode($contentJson) ?>"
             ></div>
 
             <div data-editor-fallback>
@@ -89,7 +90,7 @@ $cancelUrl = $model->isNewRecord
             </div>
 
             <?= Html::activeHiddenInput($model, 'content_json', [
-                'value' => is_string($model->content_json) ? $model->content_json : Json::encode($model->content_json),
+                'value' => $contentJson,
                 'data-editor-json-input' => '1',
             ]) ?>
         </div>
