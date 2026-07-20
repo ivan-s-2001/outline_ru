@@ -10,6 +10,7 @@
     "ext-pdo_mysql": "*",
     "firebase/php-jwt": "^6.11",
     "yiisoft/yii2": "^2.0.53",
+    "yiisoft/yii2-bootstrap5": "^2.0.51",
     "yiisoft/yii2-redis": "^2.0"
   },
   "config": {
