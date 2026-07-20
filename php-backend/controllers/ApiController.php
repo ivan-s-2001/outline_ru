@@ -1,14 +1,17 @@
 <?php
 
 declare(strict_types=1);
+
 namespace app\controllers;
 
 use app\models\ApiKey;
 use app\models\Document;
+use app\models\OAuthAccessToken;
 use app\models\forms\InstallForm;
 use app\models\User;
 use app\services\ApiKeyService;
 use app\services\AuthService;
+use app\services\OAuthService;
 use app\services\PermissionService;
 use Firebase\JWT\JWT;
 use Yii;
@@ -25,6 +28,7 @@ final class ApiController extends Controller
 {
     public $enableCsrfValidation = false;
     private ?ApiKey $authenticatedApiKey = null;
+    private ?OAuthAccessToken $authenticatedOAuthToken = null;
 
     public function beforeAction($action): bool
     {
@@ -151,6 +155,13 @@ final class ApiController extends Controller
                 'prefix' => $this->authenticatedApiKey->token_prefix,
             ];
         }
+        if ($this->authenticatedOAuthToken) {
+            $data['oauth'] = [
+                'appId' => $this->authenticatedOAuthToken->app_id,
+                'scopes' => $this->authenticatedOAuthToken->getScopes(),
+                'expiresAt' => $this->authenticatedOAuthToken->expires_at,
+            ];
+        }
         return ['data' => $data];
     }
 
@@ -169,6 +180,7 @@ final class ApiController extends Controller
                 'magicLinkAuthEnabled' => false,
                 'oidcAuthEnabled' => false,
                 'apiKeyAuthEnabled' => true,
+                'oauthEnabled' => true,
             ],
         ];
     }
@@ -198,7 +210,8 @@ final class ApiController extends Controller
         $permissions = new PermissionService();
         $canRead = $permissions->canReadDocument($user, $document);
         $apiKeyAllowsWrite = $this->authenticatedApiKey === null || $this->authenticatedApiKey->canWrite();
-        $canUpdate = $permissions->canUpdateDocument($user, $document) && $apiKeyAllowsWrite;
+        $oauthAllowsWrite = $this->authenticatedOAuthToken === null || $this->authenticatedOAuthToken->hasScope('write');
+        $canUpdate = $permissions->canUpdateDocument($user, $document) && $apiKeyAllowsWrite && $oauthAllowsWrite;
         if (!$canRead) {
             throw new ForbiddenHttpException('Нет доступа к документу');
         }
@@ -222,6 +235,7 @@ final class ApiController extends Controller
             'canRead' => $canRead,
             'canUpdate' => $canUpdate,
             'apiKeyId' => $this->authenticatedApiKey?->id,
+            'oauthTokenId' => $this->authenticatedOAuthToken?->id,
         ], $secret, 'HS256');
 
         return ['data' => ['token' => $token, 'expiresIn' => 300, 'canUpdate' => $canUpdate]];
@@ -236,15 +250,25 @@ final class ApiController extends Controller
 
         $authorization = trim((string)Yii::$app->request->headers->get('Authorization', ''));
         if (preg_match('/^Bearer\s+(.+)$/i', $authorization, $match)) {
-            $authenticated = (new ApiKeyService())->authenticate($match[1]);
-            if ($authenticated) {
-                [$user, $apiKey] = $authenticated;
+            $raw = $match[1];
+            $apiAuthenticated = (new ApiKeyService())->authenticate($raw);
+            if ($apiAuthenticated) {
+                [$user, $apiKey] = $apiAuthenticated;
                 $this->authenticatedApiKey = $apiKey;
+                return $user;
+            }
+            $oauthAuthenticated = (new OAuthService())->authenticate($raw);
+            if ($oauthAuthenticated) {
+                [$user, $oauthToken] = $oauthAuthenticated;
+                if (!$oauthToken->hasScope('read')) {
+                    throw new ForbiddenHttpException('OAuth-токен не имеет scope read.');
+                }
+                $this->authenticatedOAuthToken = $oauthToken;
                 return $user;
             }
         }
 
-        throw new UnauthorizedHttpException('Требуется вход или действующий Bearer API-ключ');
+        throw new UnauthorizedHttpException('Требуется вход, API-ключ или OAuth Bearer token');
     }
 
     private function presentUser(User $user): array
