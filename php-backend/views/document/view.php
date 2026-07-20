@@ -11,6 +11,7 @@ use yii\helpers\Url;
 /** @var Document $model */
 /** @var Revision[] $revisions */
 $this->title = $model->title ?: 'Без названия';
+$contentJson = Json::encode($model->getContentData());
 ?>
 <div class="document-view-shell">
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
@@ -40,7 +41,7 @@ $this->title = $model->title ?: 'Без названия';
                         class="outline-rich-editor"
                         data-document-id="<?= Html::encode($model->id) ?>"
                         data-editor-mode="read"
-                        data-content-json="<?= Html::encode(Json::htmlEncode($model->content_json ?: ['type' => 'doc', 'content' => []])) ?>"
+                        data-content-json="<?= Html::encode($contentJson) ?>"
                     ></div>
                     <div class="document-rendered-fallback" data-editor-fallback>
                         <?php if (trim((string)$model->content_text) === ''): ?>
