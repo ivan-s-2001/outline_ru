@@ -36,9 +36,9 @@
 | Права | policies, collection/document memberships | scoped ACL для пользователей и групп | in-progress |
 | Публичные ссылки | Share model/routes/scenes | токены, публикация потомков, public read-only view | in-progress |
 | Поиск | PostgreSQL search provider | MariaDB FULLTEXT provider + ACL | in-progress |
-| Шаблоны | Template model/routes/scenes | templates module | pending |
-| Импорт | import models/tasks/plugins | queue-based import module | pending |
-| Экспорт | export tasks/routes | ZIP/Markdown/HTML/PDF exports | pending |
+| Шаблоны | Template model/routes/scenes | MariaDB-модель, ProseMirror CRUD, создание документа из шаблона | in-progress |
+| Импорт | import models/tasks/plugins | синхронный ACL-импорт Markdown, TXT и точного ProseMirror JSON | in-progress |
+| Экспорт | export tasks/routes | ACL-экспорт документа в Markdown, HTML и ProseMirror JSON; ZIP/PDF ещё не перенесены | in-progress |
 | Уведомления | notifications, emails, jobs | DB notifications + SMTP/Mailpit + jobs | pending |
 | Realtime | Socket.IO events/presence | WebSocket event gateway | pending |
 | API ключи | ApiKey model/routes/settings | token auth and admin views | pending |
@@ -52,14 +52,14 @@
 
 ## Автоматическая проверка
 
-На текущем этапе GitHub Actions отдельно проверяет:
+GitHub Actions отдельно проверяет:
 
 - `Yii MariaDB`: Composer, PHP lint, миграции на чистой MariaDB и PHPUnit;
 - `Yii Editor Bundle`: сборку оригинального ProseMirror-редактора для Yii;
 - `Yii Collaboration Bundle`: сборку standalone Hocuspocus runtime;
 - основной CI и CodeQL сохранённого исходного Outline.
 
-Статус `accepted` ставится только после зелёных проверок и проверки пользовательского сценария в OSPanel.
+На текущем этапе Yii/MariaDB, editor bundle и collaboration bundle проходят автоматические проверки. Статус `accepted` ставится только после проверки пользовательского сценария в OSPanel.
 
 ## Запрещённые сокращения
 
