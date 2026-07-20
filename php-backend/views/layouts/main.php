@@ -35,6 +35,7 @@ $route = Yii::$app->controller->route;
             <a class="nav-link <?= str_starts_with($route, 'site/dashboard') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/site/dashboard']) ?>">Главная</a>
             <a class="nav-link <?= str_starts_with($route, 'collection/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/collection/index']) ?>">Коллекции</a>
             <a class="nav-link <?= str_starts_with($route, 'document/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/document/create']) ?>">Новый документ</a>
+            <a class="nav-link <?= str_starts_with($route, 'import/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/import/document']) ?>">Импорт</a>
             <a class="nav-link <?= str_starts_with($route, 'template/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/template/index']) ?>">Шаблоны</a>
             <a class="nav-link <?= str_starts_with($route, 'search/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/search/index']) ?>">Поиск</a>
             <a class="nav-link text-body" href="#">График</a>
@@ -86,6 +87,7 @@ $route = Yii::$app->controller->route;
             <a class="nav-link" href="<?= Url::to(['/site/dashboard']) ?>">Главная</a>
             <a class="nav-link" href="<?= Url::to(['/collection/index']) ?>">Коллекции</a>
             <a class="nav-link" href="<?= Url::to(['/document/create']) ?>">Новый документ</a>
+            <a class="nav-link" href="<?= Url::to(['/import/document']) ?>">Импорт</a>
             <a class="nav-link" href="<?= Url::to(['/template/index']) ?>">Шаблоны</a>
             <a class="nav-link" href="<?= Url::to(['/search/index']) ?>">Поиск</a>
             <?php if ($currentUser?->isAdmin()): ?>
