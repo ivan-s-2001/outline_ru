@@ -7,6 +7,7 @@ namespace app\controllers;
 use app\components\AuthenticatedController;
 use app\models\Absence;
 use app\models\AbsenceType;
+use app\models\BaseRecord;
 use app\models\Shift;
 use app\models\ShiftType;
 use app\models\User;
@@ -81,17 +82,27 @@ final class ScheduleController extends AuthenticatedController
             }
         }
         foreach ($shifts as $shift) {
-            $cells[$shift->user_id][$shift->work_date]['shifts'][] = $shift;
+            if (isset($cells[$shift->user_id][$shift->work_date])) {
+                $cells[$shift->user_id][$shift->work_date]['shifts'][] = $shift;
+            }
         }
         foreach ($absences as $absence) {
+            if (!isset($cells[$absence->user_id])) {
+                continue;
+            }
             $from = max($start->format('Y-m-d'), (string)$absence->date_from);
             $to = min($end->format('Y-m-d'), (string)$absence->date_to);
             foreach (new DatePeriod(new DateTimeImmutable($from), new DateInterval('P1D'), (new DateTimeImmutable($to))->modify('+1 day')) as $day) {
-                $cells[$absence->user_id][$day->format('Y-m-d')]['absences'][] = $absence;
+                $dayKey = $day->format('Y-m-d');
+                if (isset($cells[$absence->user_id][$dayKey])) {
+                    $cells[$absence->user_id][$dayKey]['absences'][] = $absence;
+                }
             }
         }
         foreach ($adjustments as $adjustment) {
-            $cells[$adjustment->user_id][$adjustment->work_date]['adjustments'][] = $adjustment;
+            if (isset($cells[$adjustment->user_id][$adjustment->work_date])) {
+                $cells[$adjustment->user_id][$adjustment->work_date]['adjustments'][] = $adjustment;
+            }
         }
 
         return $this->render('index', [
@@ -218,10 +229,16 @@ final class ScheduleController extends AuthenticatedController
                 ['Поздняя', 'late', '#6F42C1', '12:00:00', '21:00:00', 60],
             ] as [$name, $code, $color, $start, $end, $break]) {
                 (new ShiftType([
-                    'workspace_id' => $this->workspaceId(), 'name' => $name, 'code' => $code,
-                    'color' => $color, 'default_start_time' => $start, 'default_end_time' => $end,
-                    'default_break_minutes' => $break, 'is_active' => true,
-                ]))->save(false);
+                    'id' => BaseRecord::uuid(),
+                    'workspace_id' => $this->workspaceId(),
+                    'name' => $name,
+                    'code' => $code,
+                    'color' => $color,
+                    'default_start_time' => $start,
+                    'default_end_time' => $end,
+                    'default_break_minutes' => $break,
+                    'is_active' => true,
+                ]))->save();
             }
         }
         if (!AbsenceType::find()->where(['workspace_id' => $this->workspaceId()])->exists()) {
@@ -231,9 +248,14 @@ final class ScheduleController extends AuthenticatedController
                 ['Отсутствие', 'absence', '#FFC107', false],
             ] as [$name, $code, $color, $paid]) {
                 (new AbsenceType([
-                    'workspace_id' => $this->workspaceId(), 'name' => $name, 'code' => $code,
-                    'color' => $color, 'is_paid' => $paid, 'is_active' => true,
-                ]))->save(false);
+                    'id' => BaseRecord::uuid(),
+                    'workspace_id' => $this->workspaceId(),
+                    'name' => $name,
+                    'code' => $code,
+                    'color' => $color,
+                    'is_paid' => $paid,
+                    'is_active' => true,
+                ]))->save();
             }
         }
     }
