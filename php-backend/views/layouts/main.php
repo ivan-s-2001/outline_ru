@@ -46,6 +46,9 @@ $notificationLabel = 'Уведомления' . ($unreadNotifications > 0 ? ' ('
             <a class="nav-link <?= str_starts_with($route, 'site/dashboard') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/site/dashboard']) ?>">Главная</a>
             <a class="nav-link <?= str_starts_with($route, 'collection/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/collection/index']) ?>">Коллекции</a>
             <a class="nav-link <?= str_starts_with($route, 'document/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/document/create']) ?>">Новый документ</a>
+            <a class="nav-link <?= $route === 'library/favorites' ? 'active' : 'text-body' ?>" href="<?= Url::to(['/library/favorites']) ?>">Избранное</a>
+            <a class="nav-link <?= $route === 'library/archive' ? 'active' : 'text-body' ?>" href="<?= Url::to(['/library/archive']) ?>">Архив</a>
+            <a class="nav-link <?= $route === 'library/trash' ? 'active' : 'text-body' ?>" href="<?= Url::to(['/library/trash']) ?>">Корзина</a>
             <a class="nav-link <?= str_starts_with($route, 'notification/') ? 'active' : 'text-body' ?> d-flex justify-content-between align-items-center" href="<?= Url::to(['/notification/index']) ?>">
                 <span>Уведомления</span>
                 <?php if ($unreadNotifications > 0): ?><span class="badge text-bg-primary rounded-pill"><?= $unreadNotifications ?></span><?php endif; ?>
@@ -107,6 +110,9 @@ $notificationLabel = 'Уведомления' . ($unreadNotifications > 0 ? ' ('
             <a class="nav-link" href="<?= Url::to(['/site/dashboard']) ?>">Главная</a>
             <a class="nav-link" href="<?= Url::to(['/collection/index']) ?>">Коллекции</a>
             <a class="nav-link" href="<?= Url::to(['/document/create']) ?>">Новый документ</a>
+            <a class="nav-link" href="<?= Url::to(['/library/favorites']) ?>">Избранное</a>
+            <a class="nav-link" href="<?= Url::to(['/library/archive']) ?>">Архив</a>
+            <a class="nav-link" href="<?= Url::to(['/library/trash']) ?>">Корзина</a>
             <a class="nav-link" href="<?= Url::to(['/notification/index']) ?>"><?= Html::encode($notificationLabel) ?></a>
             <a class="nav-link" href="<?= Url::to(['/import/document']) ?>">Импорт</a>
             <a class="nav-link" href="<?= Url::to(['/template/index']) ?>">Шаблоны</a>
