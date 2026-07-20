@@ -18,6 +18,7 @@ import {
   archivePath,
   draftsPath,
   homePath,
+  schedulePath,
   searchPath,
   settingsPath,
   matchDocumentSlug as documentSlug,
@@ -33,6 +34,7 @@ const Collection = lazy(() => import("~/scenes/Collection"));
 const Document = lazy(() => import("~/scenes/Document"));
 const Drafts = lazy(() => import("~/scenes/Drafts"));
 const Home = lazy(() => import("~/scenes/Home"));
+const Schedule = lazy(() => import("~/scenes/Schedule"));
 const Search = lazy(() => import("~/scenes/Search"));
 const Trash = lazy(() => import("~/scenes/Trash"));
 const Debug = lazy(() => import("~/scenes/Developer/Debug"));
@@ -81,6 +83,10 @@ function AuthenticatedRoutes() {
                 <Route exact path={trashPath()} component={Trash} />
               )}
               <Route path={`${homePath()}/:tab?`} component={Home} />
+              <Route
+                path={`${schedulePath()}/:view?`}
+                component={Schedule}
+              />
               <Redirect from="/dashboard" to={homePath()} />
               <Redirect exact from="/starred" to={homePath()} />
               <Redirect
