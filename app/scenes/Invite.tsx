@@ -9,6 +9,7 @@ import styled from "styled-components";
 import { errToString } from "@shared/utils/error";
 import { UserRole } from "@shared/types";
 import { parseEmail } from "@shared/utils/email";
+import { formatUserName } from "@shared/utils/userName";
 import { UserValidation } from "@shared/validations";
 import Button from "~/components/Button";
 import Flex from "~/components/Flex";
@@ -29,16 +30,22 @@ type Props = {
 
 type InviteRequest = {
   email: string;
-  name: string;
+  lastName: string;
+  firstName: string;
+  middleName: string;
 };
+
+const emptyInvite = (): InviteRequest => ({
+  email: "",
+  lastName: "",
+  firstName: "",
+  middleName: "",
+});
 
 function Invite({ onSubmit }: Props) {
   const [isSaving, setIsSaving] = React.useState(false);
   const [invites, setInvites] = React.useState<InviteRequest[]>([
-    {
-      email: "",
-      name: "",
-    },
+    emptyInvite(),
   ]);
   const { users, collections } = useStores();
   const user = useCurrentUser();
@@ -55,7 +62,13 @@ function Invite({ onSubmit }: Props) {
 
       try {
         const response = await users.invite(
-          invites.filter((i) => i.email).map((memo) => ({ ...memo, role }))
+          invites
+            .filter((invite) => invite.email)
+            .map(({ email, lastName, firstName, middleName }) => ({
+              email,
+              name: formatUserName({ lastName, firstName, middleName }),
+              role,
+            }))
         );
         onSubmit();
 
@@ -78,8 +91,10 @@ function Invite({ onSubmit }: Props) {
   const handleChange = React.useCallback((ev, index: number) => {
     setInvites((prevInvites) => {
       const newInvites = [...prevInvites];
-      newInvites[index][ev.target.name as keyof InviteRequest] =
-        ev.target.value;
+      newInvites[index] = {
+        ...newInvites[index],
+        [ev.target.name]: ev.target.value,
+      };
       return newInvites;
     });
   }, []);
@@ -91,16 +106,10 @@ function Invite({ onSubmit }: Props) {
           MAX_INVITES: UserValidation.maxInvitesPerRequest,
         })
       );
+      return;
     }
 
-    setInvites((prevInvites) => {
-      const newInvites = [...prevInvites];
-      newInvites.push({
-        email: "",
-        name: "",
-      });
-      return newInvites;
-    });
+    setInvites((prevInvites) => [...prevInvites, emptyInvite()]);
   }, [invites, t]);
 
   const handleKeyDown = React.useCallback(
@@ -202,44 +211,87 @@ function Invite({ onSubmit }: Props) {
             label={t("Invite as")}
           />
 
-          <ResizingHeightContainer style={{ minHeight: 72, marginBottom: 8 }}>
-            {invites.map((invite, index) => (
-              <Flex key={index} gap={8}>
-                <StyledInput
-                  type="email"
-                  name="email"
-                  label={t("Email")}
-                  labelHidden={index !== 0}
-                  onKeyDown={handleKeyDown}
-                  onChange={(ev) => handleChange(ev, index)}
-                  placeholder={`name@${predictedDomain}`}
-                  value={invite.email}
-                  required={index === 0}
-                  autoComplete="off"
-                  autoFocus
-                  data-1p-ignore
-                  flex
-                />
-                <StyledInput
-                  type="text"
-                  name="name"
-                  label={t("Name")}
-                  labelHidden={index !== 0}
-                  onKeyDown={handleKeyDown}
-                  onChange={(ev) => handleChange(ev, index)}
-                  autoComplete="off"
-                  data-1p-ignore
-                  value={invite.name}
-                  required={!!invite.email}
-                  flex
-                />
-              </Flex>
-            ))}
+          <ResizingHeightContainer style={{ minHeight: 132, marginBottom: 8 }}>
+            <Flex gap={16} column>
+              {invites.map((invite, index) => {
+                const hasAnyValue = Boolean(
+                  invite.email ||
+                    invite.lastName ||
+                    invite.firstName ||
+                    invite.middleName
+                );
+                const required = index === 0 || hasAnyValue;
+
+                return (
+                  <Flex key={index} gap={8} column>
+                    <Flex gap={8}>
+                      <StyledInput
+                        type="text"
+                        name="lastName"
+                        label={t("Фамилия")}
+                        labelHidden={index !== 0}
+                        onKeyDown={handleKeyDown}
+                        onChange={(ev) => handleChange(ev, index)}
+                        autoComplete="off"
+                        data-1p-ignore
+                        value={invite.lastName}
+                        maxLength={UserValidation.maxNameLength}
+                        required={required}
+                        autoFocus={index === 0}
+                        flex
+                      />
+                      <StyledInput
+                        type="text"
+                        name="firstName"
+                        label={t("Имя")}
+                        labelHidden={index !== 0}
+                        onKeyDown={handleKeyDown}
+                        onChange={(ev) => handleChange(ev, index)}
+                        autoComplete="off"
+                        data-1p-ignore
+                        value={invite.firstName}
+                        maxLength={UserValidation.maxNameLength}
+                        required={required}
+                        flex
+                      />
+                      <StyledInput
+                        type="text"
+                        name="middleName"
+                        label={t("Отчество")}
+                        labelHidden={index !== 0}
+                        onKeyDown={handleKeyDown}
+                        onChange={(ev) => handleChange(ev, index)}
+                        autoComplete="off"
+                        data-1p-ignore
+                        value={invite.middleName}
+                        maxLength={UserValidation.maxNameLength}
+                        required={required}
+                        flex
+                      />
+                    </Flex>
+                    <StyledInput
+                      type="email"
+                      name="email"
+                      label={t("Email")}
+                      labelHidden={index !== 0}
+                      onKeyDown={handleKeyDown}
+                      onChange={(ev) => handleChange(ev, index)}
+                      placeholder={`name@${predictedDomain}`}
+                      value={invite.email}
+                      required={required}
+                      autoComplete="off"
+                      data-1p-ignore
+                      flex
+                    />
+                  </Flex>
+                );
+              })}
+            </Flex>
           </ResizingHeightContainer>
         </Flex>
 
         <Flex justify="space-between">
-          {invites.length <= UserValidation.maxInvitesPerRequest ? (
+          {invites.length < UserValidation.maxInvitesPerRequest ? (
             <Button
               type="button"
               onClick={handleAdd}
