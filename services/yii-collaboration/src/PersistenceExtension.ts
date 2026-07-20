@@ -4,6 +4,7 @@ import type {
   onLoadDocumentPayload,
   onStoreDocumentPayload,
 } from "@hocuspocus/server";
+import type { PoolConnection } from "mysql2/promise";
 import { Node } from "prosemirror-model";
 import { prosemirrorToYDoc, yDocToProsemirrorJSON } from "y-prosemirror";
 import * as Y from "yjs";
@@ -33,6 +34,89 @@ function parseStoredContent(value: unknown): object | undefined {
     return parsed && typeof parsed === "object" ? parsed : undefined;
   } catch (_error) {
     return undefined;
+  }
+}
+
+function collectUserMentions(value: unknown): Map<string, string> {
+  const mentions = new Map<string, string>();
+
+  const walk = (current: unknown, path = "0") => {
+    if (!current || typeof current !== "object") {
+      return;
+    }
+
+    if (Array.isArray(current)) {
+      current.forEach((child, index) => walk(child, `${path}.${index}`));
+      return;
+    }
+
+    const node = current as Record<string, unknown>;
+    const attrs =
+      node.attrs && typeof node.attrs === "object"
+        ? (node.attrs as Record<string, unknown>)
+        : undefined;
+    if (node.type === "mention" && attrs?.type === "user") {
+      const userId = typeof attrs.modelId === "string" ? attrs.modelId : "";
+      const rawMentionId = typeof attrs.id === "string" ? attrs.id : "";
+      if (/^[0-9a-fA-F-]{36}$/.test(userId)) {
+        const mentionId = rawMentionId || `${path}:${userId}`;
+        mentions.set(mentionId, userId);
+      }
+    }
+
+    Object.entries(node).forEach(([key, child]) => walk(child, `${path}.${key}`));
+  };
+
+  walk(value);
+  return mentions;
+}
+
+async function storeMentionNotifications(
+  connection: PoolConnection,
+  options: {
+    workspaceId: string;
+    documentId: string;
+    actorId: string;
+    previous: object | undefined;
+    current: object;
+  }
+): Promise<void> {
+  const previous = collectUserMentions(options.previous);
+  const current = collectUserMentions(options.current);
+
+  for (const [mentionId, recipientId] of current) {
+    if (previous.has(mentionId) || recipientId === options.actorId) {
+      continue;
+    }
+
+    const [recipients] = await connection.query<Array<{ id: string }>>(
+      `SELECT id
+       FROM users
+       WHERE id = ? AND workspace_id = ? AND status = 'active'
+       LIMIT 1`,
+      [recipientId, options.workspaceId]
+    );
+    if (!recipients[0]) {
+      continue;
+    }
+
+    const uniqueKey = `mention:${options.documentId}:${mentionId}:${recipientId}`;
+    await connection.execute(
+      `INSERT IGNORE INTO notifications
+        (id, workspace_id, user_id, actor_id, type, document_id,
+         comment_id, unique_key, data, read_at, archived_at, created_at)
+       VALUES (?, ?, ?, ?, 'document_mention', ?, NULL, ?, ?, NULL, NULL,
+               CURRENT_TIMESTAMP(6))`,
+      [
+        randomUUID(),
+        options.workspaceId,
+        recipientId,
+        options.actorId,
+        options.documentId,
+        uniqueKey,
+        JSON.stringify({ mentionId }),
+      ]
+    );
   }
 }
 
@@ -86,9 +170,13 @@ export class PersistenceExtension implements Extension {
     try {
       await connection.beginTransaction();
       const [documents] = await connection.query<
-        Array<{ title: string; revision_number: number }>
+        Array<{
+          title: string;
+          revision_number: number;
+          content_json: unknown;
+        }>
       >(
-        `SELECT title, revision_number
+        `SELECT title, revision_number, content_json
          FROM documents
          WHERE id = ? AND workspace_id = ? AND deleted_at IS NULL
          FOR UPDATE`,
@@ -99,6 +187,7 @@ export class PersistenceExtension implements Extension {
         throw new Error("Document not found while storing collaboration state");
       }
 
+      const previousContent = parseStoredContent(stored.content_json);
       const revisionNumber = Number(stored.revision_number) + 1;
       const serialized = JSON.stringify(json);
       await connection.execute(
@@ -133,6 +222,14 @@ export class PersistenceExtension implements Extension {
           revisionNumber,
         ]
       );
+
+      await storeMentionNotifications(connection, {
+        workspaceId: user.workspaceId,
+        documentId,
+        actorId: user.id,
+        previous: previousContent,
+        current: json,
+      });
 
       await connection.commit();
     } catch (error) {
