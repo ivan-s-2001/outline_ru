@@ -19,13 +19,12 @@ $components = [
         ],
     ],
     'response' => [
-        'format' => yii\web\Response::FORMAT_JSON,
         'charset' => 'UTF-8',
     ],
     'user' => [
         'identityClass' => User::class,
         'enableAutoLogin' => true,
-        'loginUrl' => null,
+        'loginUrl' => ['/site/login'],
         'identityCookie' => [
             'name' => '_outline_identity',
             'httpOnly' => true,
@@ -49,9 +48,23 @@ $components = [
         'enableStrictParsing' => true,
         'rules' => [
             'GET health' => 'site/health',
+            'GET,POST install' => 'site/install',
+            'GET,POST login' => 'site/login',
+            'POST logout' => 'site/logout',
+            'GET dashboard' => 'site/dashboard',
+            'GET collections' => 'collection/index',
+            'GET,POST collections/create' => 'collection/create',
+            'GET collections/<id:[0-9a-fA-F-]{36}>' => 'collection/view',
+            'GET,POST documents/create' => 'document/create',
+            'GET documents/<id:[0-9a-fA-F-]{36}>' => 'document/view',
+            'GET,POST documents/<id:[0-9a-fA-F-]{36}>/edit' => 'document/update',
             'POST api/<method:[A-Za-z0-9._-]+>' => 'api/dispatch',
             'OPTIONS api/<method:[A-Za-z0-9._-]+>' => 'api/options',
         ],
+    ],
+    'assetManager' => [
+        'appendTimestamp' => true,
+        'linkAssets' => false,
     ],
     'log' => [
         'traceLevel' => env('APP_DEBUG', false) ? 3 : 0,
@@ -80,10 +93,11 @@ if ((bool)env('REDIS_ENABLED', true)) {
 }
 
 return [
-    'id' => 'outline-yii-api',
+    'id' => 'outline-yii',
     'name' => (string)env('APP_NAME', 'Outline'),
     'basePath' => dirname(__DIR__),
     'controllerNamespace' => 'app\\controllers',
+    'defaultRoute' => 'site/dashboard',
     'language' => 'ru-RU',
     'sourceLanguage' => 'en-US',
     'timeZone' => 'Europe/Moscow',
