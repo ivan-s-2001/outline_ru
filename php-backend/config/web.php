@@ -69,6 +69,14 @@ $components = [
             'POST comments/<id:[0-9a-fA-F-]{36}>/resolve' => 'comment/resolve',
             'POST comments/<id:[0-9a-fA-F-]{36}>/delete' => 'comment/delete',
 
+            'GET admin/groups' => 'group/index',
+            'GET,POST admin/groups/create' => 'group/create',
+            'GET admin/groups/<id:[0-9a-fA-F-]{36}>' => 'group/view',
+            'GET,POST admin/groups/<id:[0-9a-fA-F-]{36}>/edit' => 'group/update',
+            'POST admin/groups/<id:[0-9a-fA-F-]{36}>/delete' => 'group/delete',
+            'POST admin/groups/<id:[0-9a-fA-F-]{36}>/members' => 'group/add-member',
+            'POST admin/groups/<id:[0-9a-fA-F-]{36}>/members/<userId:[0-9a-fA-F-]{36}>/delete' => 'group/remove-member',
+
             'POST api/<method:[A-Za-z0-9._-]+>' => 'api/dispatch',
             'OPTIONS api/<method:[A-Za-z0-9._-]+>' => 'api/options',
         ],
