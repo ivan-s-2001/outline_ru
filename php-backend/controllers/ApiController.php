@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace app\controllers;
 
+use app\models\Document;
 use app\models\forms\InstallForm;
 use app\models\User;
 use app\services\AuthService;
+use app\services\PermissionService;
 use Firebase\JWT\JWT;
 use Yii;
 use yii\db\Expression;
@@ -168,13 +170,24 @@ final class ApiController extends Controller
             throw new BadRequestHttpException('Некорректный идентификатор документа');
         }
 
-        $document = Yii::$app->db->createCommand(
-            'SELECT id, workspace_id, collection_id FROM {{%documents}} WHERE id=:id AND deleted_at IS NULL LIMIT 1',
-            [':id' => $documentId]
-        )->queryOne();
-
-        if (!$document || $document['workspace_id'] !== $user->workspace_id) {
+        $document = Document::find()
+            ->with('collection')
+            ->where([
+                'id' => $documentId,
+                'workspace_id' => $user->workspace_id,
+                'archived_at' => null,
+                'deleted_at' => null,
+            ])
+            ->one();
+        if (!$document) {
             throw new NotFoundHttpException('Документ не найден');
+        }
+
+        $permissions = new PermissionService();
+        $canRead = $permissions->canReadDocument($user, $document);
+        $canUpdate = $permissions->canUpdateDocument($user, $document);
+        if (!$canRead) {
+            throw new ForbiddenHttpException('Нет доступа к документу');
         }
 
         $now = time();
@@ -193,8 +206,8 @@ final class ApiController extends Controller
             'document' => $documentId,
             'name' => $user->getFullName(),
             'color' => $user->color,
-            'canRead' => true,
-            'canUpdate' => true,
+            'canRead' => $canRead,
+            'canUpdate' => $canUpdate,
         ], $secret, 'HS256');
 
         return ['data' => ['token' => $token, 'expiresIn' => 300]];
