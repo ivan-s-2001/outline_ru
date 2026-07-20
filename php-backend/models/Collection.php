@@ -21,7 +21,7 @@ final class Collection extends BaseRecord
             [['name'], 'string', 'min' => 1, 'max' => 255],
             [['color'], 'match', 'pattern' => '/^#[0-9A-Fa-f]{6}$/', 'message' => 'Укажите цвет в формате #RRGGBB.'],
             [['icon'], 'string', 'max' => 255],
-            [['permission'], 'in', 'range' => ['read', 'read_write']],
+            [['permission'], 'in', 'range' => ['none', 'read', 'read_write']],
             [['workspace_id', 'created_by_id'], 'string', 'max' => 36],
             [['sort_order'], 'string', 'max' => 255],
         ];
