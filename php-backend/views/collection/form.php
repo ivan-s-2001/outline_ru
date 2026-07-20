@@ -64,7 +64,8 @@ $this->title = $title;
                 <?= $form->field($model, 'permission')->dropDownList([
                     'read_write' => 'Участники могут читать и изменять',
                     'read' => 'Участники могут только читать',
-                ]) ?>
+                    'none' => 'Только приглашённые пользователи и группы',
+                ])->hint('Индивидуальные права и права групп имеют приоритет.', ['class' => 'form-text']) ?>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
                     <a class="btn btn-outline-secondary" href="<?= $model->isNewRecord ? Url::to(['/collection/index']) : Url::to(['/collection/view', 'id' => $model->id]) ?>">Отмена</a>
