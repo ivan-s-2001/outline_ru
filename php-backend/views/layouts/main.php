@@ -43,6 +43,7 @@ $route = Yii::$app->controller->route;
 
             <?php if ($currentUser?->isAdmin()): ?>
                 <div class="small text-uppercase text-body-secondary fw-semibold mt-4 mb-1 px-2">Администрирование</div>
+                <a class="nav-link <?= str_starts_with($route, 'user/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/user/index']) ?>">Пользователи</a>
                 <a class="nav-link <?= str_starts_with($route, 'group/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/group/index']) ?>">Группы</a>
             <?php endif; ?>
         </nav>
@@ -87,6 +88,7 @@ $route = Yii::$app->controller->route;
             <a class="nav-link" href="<?= Url::to(['/document/create']) ?>">Новый документ</a>
             <?php if ($currentUser?->isAdmin()): ?>
                 <hr>
+                <a class="nav-link" href="<?= Url::to(['/user/index']) ?>">Пользователи</a>
                 <a class="nav-link" href="<?= Url::to(['/group/index']) ?>">Группы</a>
             <?php endif; ?>
         </nav>
