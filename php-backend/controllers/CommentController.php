@@ -7,6 +7,7 @@ namespace app\controllers;
 use app\components\AuthenticatedController;
 use app\models\Comment;
 use app\models\Document;
+use app\services\NotificationService;
 use app\services\PermissionService;
 use Yii;
 use yii\filters\VerbFilter;
@@ -62,6 +63,7 @@ final class CommentController extends AuthenticatedController
         if (!$comment->save()) {
             Yii::$app->session->setFlash('error', $this->firstError($comment->getFirstErrors()));
         } else {
+            (new NotificationService())->notifyComment($comment, $this->currentUser(), $document);
             Yii::$app->session->setFlash('success', $parentId ? 'Ответ добавлен.' : 'Комментарий добавлен.');
         }
 
