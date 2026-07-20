@@ -18,11 +18,14 @@ final class User extends ActiveRecord implements IdentityInterface
     public function rules(): array
     {
         return [
-            [['workspace_id', 'email', 'last_name', 'first_name', 'middle_name'], 'required'],
+            [['workspace_id', 'login', 'email', 'last_name', 'first_name', 'middle_name'], 'required'],
             [['email'], 'email'],
             [['email'], 'unique'],
+            [['login'], 'unique'],
             [['id', 'workspace_id'], 'string', 'max' => 36],
-            [['last_name', 'first_name', 'middle_name', 'email', 'role', 'status', 'color'], 'string', 'max' => 255],
+            [['login', 'last_name', 'first_name', 'middle_name'], 'string', 'max' => 120],
+            [['email', 'role', 'status', 'color'], 'string', 'max' => 255],
+            [['login'], 'match', 'pattern' => '/^[a-zA-Z0-9._-]+$/', 'message' => 'Логин может содержать латинские буквы, цифры, точку, дефис и подчёркивание'],
         ];
     }
 
@@ -39,6 +42,15 @@ final class User extends ActiveRecord implements IdentityInterface
     public static function findByEmail(string $email): ?self
     {
         return self::findOne(['email' => mb_strtolower(trim($email)), 'status' => 'active']);
+    }
+
+    public static function findByLoginOrEmail(string $identity): ?self
+    {
+        $identity = mb_strtolower(trim($identity));
+        return self::find()
+            ->where(['status' => 'active'])
+            ->andWhere(['or', ['login' => $identity], ['email' => $identity]])
+            ->one();
     }
 
     public function getId(): string
