@@ -1,0 +1,32 @@
+{
+  "name": "ivan-s-2001/outline-php",
+  "description": "Локальная корпоративная база знаний и графики на Yii2",
+  "type": "project",
+  "license": "proprietary",
+  "require": {
+    "php": "^8.2 || ^8.3 || ^8.4",
+    "ext-pdo": "*",
+    "ext-pdo_mysql": "*",
+    "ext-mbstring": "*",
+    "yiisoft/yii2": "^2.0",
+    "yiisoft/yii2-redis": "^2.0"
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://asset-packagist.org"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "app\\": ""
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true
+    },
+    "optimize-autoloader": true,
+    "sort-packages": true
+  }
+}

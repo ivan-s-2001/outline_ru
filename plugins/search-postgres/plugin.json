@@ -1,6 +1,0 @@
-{
-  "id": "search-postgres",
-  "name": "PostgreSQL Search",
-  "priority": 0,
-  "description": "Full-text search powered by PostgreSQL tsvector."
-}
