@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use app\models\Comment;
 use app\models\Document;
 use app\models\Revision;
 use yii\helpers\Html;
@@ -10,6 +11,9 @@ use yii\helpers\Url;
 
 /** @var Document $model */
 /** @var Revision[] $revisions */
+/** @var Document[] $children */
+/** @var Comment[] $comments */
+/** @var Comment $commentForm */
 /** @var bool $canUpdate */
 $this->title = $model->title ?: 'Без названия';
 $contentJson = Json::encode($model->getContentData());
@@ -56,11 +60,11 @@ $contentJson = Json::encode($model->getContentData());
                 </div>
             </article>
 
-            <?php if ($model->children): ?>
+            <?php if ($children): ?>
                 <div class="card border-0 shadow-sm mt-4">
                     <div class="card-header bg-body border-0 pt-4 px-4"><h2 class="h5 mb-0">Дочерние документы</h2></div>
                     <div class="list-group list-group-flush">
-                        <?php foreach ($model->children as $child): ?>
+                        <?php foreach ($children as $child): ?>
                             <a class="list-group-item list-group-item-action px-4 py-3" href="<?= Url::to(['/document/view', 'id' => $child->id]) ?>">
                                 <?= Html::encode($child->title ?: 'Без названия') ?>
                             </a>
@@ -68,6 +72,13 @@ $contentJson = Json::encode($model->getContentData());
                     </div>
                 </div>
             <?php endif; ?>
+
+            <?= $this->render('_comments', [
+                'document' => $model,
+                'comments' => $comments,
+                'commentForm' => $commentForm,
+                'canUpdate' => $canUpdate,
+            ]) ?>
         </div>
 
         <aside class="col-12 col-xl-3">
