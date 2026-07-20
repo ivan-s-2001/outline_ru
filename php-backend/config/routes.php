@@ -22,6 +22,13 @@ return [
     'POST collections/<id:[0-9a-fA-F-]{36}>/access/grant' => 'access/grant-collection',
     'POST collections/<id:[0-9a-fA-F-]{36}>/access/<permissionId:[0-9a-fA-F-]{36}>/delete' => 'access/revoke-collection',
 
+    'GET templates' => 'template/index',
+    'GET,POST templates/create' => 'template/create',
+    'GET templates/<id:[0-9a-fA-F-]{36}>' => 'template/view',
+    'GET,POST templates/<id:[0-9a-fA-F-]{36}>/edit' => 'template/update',
+    'GET,POST templates/<id:[0-9a-fA-F-]{36}>/use' => 'template/use',
+    'POST templates/<id:[0-9a-fA-F-]{36}>/delete' => 'template/delete',
+
     'GET,POST documents/create' => 'document/create',
     'GET documents/<id:[0-9a-fA-F-]{36}>' => 'document/view',
     'GET,POST documents/<id:[0-9a-fA-F-]{36}>/edit' => 'document/update',
