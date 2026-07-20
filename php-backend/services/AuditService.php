@@ -1,10 +1,12 @@
 <?php
 
 declare(strict_types=1);
+
 namespace app\services;
 
 use app\models\Event;
 use app\models\User;
+use Throwable;
 use Yii;
 use yii\web\Request as WebRequest;
 
@@ -33,6 +35,17 @@ final class AuditService
                 'message' => 'Unable to save audit event',
                 'event' => $name,
                 'errors' => $event->getErrors(),
+            ], __METHOD__);
+            return;
+        }
+
+        try {
+            (new WebhookService())->enqueue($event);
+        } catch (Throwable $error) {
+            Yii::warning([
+                'message' => 'Unable to enqueue webhooks',
+                'eventId' => $event->id,
+                'error' => $error->getMessage(),
             ], __METHOD__);
         }
     }
