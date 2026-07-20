@@ -24,7 +24,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
 
     steps:
       - name: Checkout
@@ -40,6 +40,23 @@ jobs:
 
       - name: Install build dependencies
         run: yarn install --immutable
+
+      - name: Check standalone editor lint
+        run: yarn oxlint --type-aware app/yii-editor 2>&1 | tee yii-editor-lint.log
+
+      - name: Check repository TypeScript
+        run: yarn tsc --pretty false 2>&1 | tee yii-editor-tsc.log
+
+      - name: Upload editor diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yii-editor-diagnostics-${{ github.run_id }}
+          path: |
+            yii-editor-lint.log
+            yii-editor-tsc.log
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Build standalone editor
         run: yarn vite build --config vite.yii-editor.config.ts
