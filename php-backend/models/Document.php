@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace app\models;
 
+use JsonException;
 use yii\db\ActiveQuery;
 
 final class Document extends BaseRecord
@@ -34,6 +35,34 @@ final class Document extends BaseRecord
             'parent_document_id' => 'Родительский документ',
             'content_text' => 'Содержимое',
         ];
+    }
+
+    public function beforeSave($insert): bool
+    {
+        if (is_array($this->content_json)) {
+            $this->content_json = json_encode(
+                $this->content_json,
+                JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            );
+        }
+        return parent::beforeSave($insert);
+    }
+
+    public function getContentData(): array
+    {
+        if (is_array($this->content_json)) {
+            return $this->content_json;
+        }
+        if (!is_string($this->content_json) || trim($this->content_json) === '') {
+            return ['type' => 'doc', 'content' => []];
+        }
+
+        try {
+            $decoded = json_decode($this->content_json, true, 512, JSON_THROW_ON_ERROR);
+            return is_array($decoded) ? $decoded : ['type' => 'doc', 'content' => []];
+        } catch (JsonException) {
+            return ['type' => 'doc', 'content' => []];
+        }
     }
 
     public function getCollection(): ActiveQuery
