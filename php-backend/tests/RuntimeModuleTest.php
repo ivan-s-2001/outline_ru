@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace app\tests;
 
 use app\models\Revision;
+use app\models\Template;
 use app\services\AttachmentStorage;
 use PHPUnit\Framework\TestCase;
 use Yii;
@@ -24,6 +25,11 @@ final class RuntimeModuleTest extends TestCase
             $routes['GET documents/<documentId:[0-9a-fA-F-]{36}>/history']
         );
         self::assertSame('public/share', $routes['GET s/<token:[0-9a-f]{64}>']);
+        self::assertSame('template/index', $routes['GET templates']);
+        self::assertSame(
+            'template/use',
+            $routes['GET,POST templates/<id:[0-9a-fA-F-]{36}>/use']
+        );
     }
 
     public function testRevisionDecodesStoredEditorJson(): void
@@ -43,6 +49,28 @@ final class RuntimeModuleTest extends TestCase
         $revision->content_json = '{invalid';
 
         self::assertSame(['type' => 'doc', 'content' => []], $revision->getContentData());
+    }
+
+    public function testTemplateDecodesStoredEditorJson(): void
+    {
+        $template = new Template();
+        $template->content_json = '{"type":"doc","content":[{"type":"heading","attrs":{"level":2}}]}';
+
+        self::assertSame(
+            ['type' => 'doc', 'content' => [['type' => 'heading', 'attrs' => ['level' => 2]]]],
+            $template->getContentData()
+        );
+    }
+
+    public function testInvalidTemplateJsonReturnsEditableEmptyDocument(): void
+    {
+        $template = new Template();
+        $template->content_json = '{invalid';
+
+        self::assertSame(
+            ['type' => 'doc', 'content' => [['type' => 'paragraph']]],
+            $template->getContentData()
+        );
     }
 
     public function testAttachmentStorageFallsBackToRuntimeDirectory(): void
