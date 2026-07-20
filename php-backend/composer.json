@@ -12,6 +12,7 @@
     "ext-pdo": "*",
     "ext-pdo_mysql": "*",
     "firebase/php-jwt": "^7.1",
+    "symfony/mailer": "^7.4",
     "yiisoft/yii2": "~2.0.55",
     "yiisoft/yii2-bootstrap5": "^2.0.51",
     "yiisoft/yii2-redis": "~2.1.2"
