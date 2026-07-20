@@ -101,14 +101,15 @@ final class PermissionService
             'SELECT p.permission
              FROM {{%%%s}} p
              LEFT JOIN {{%%group_users}} gu
-               ON gu.group_id = p.group_id AND gu.user_id = :user
+               ON gu.group_id = p.group_id AND gu.user_id = :groupUser
              WHERE p.%s = :model
-               AND (p.user_id = :user OR gu.user_id IS NOT NULL)',
+               AND (p.user_id = :directUser OR gu.user_id IS NOT NULL)',
             $permissionTable,
             $modelColumn
         );
         $permissions = Yii::$app->db->createCommand($sql, [
-            ':user' => $userId,
+            ':groupUser' => $userId,
+            ':directUser' => $userId,
             ':model' => $modelId,
         ])->queryColumn();
 
