@@ -31,6 +31,7 @@ return [
 
     'GET,POST documents/create' => 'document/create',
     'GET documents/<id:[0-9a-fA-F-]{36}>' => 'document/view',
+    'GET documents/<id:[0-9a-fA-F-]{36}>/export/<format:(?:md|markdown|html|json)>' => 'export/document',
     'GET,POST documents/<id:[0-9a-fA-F-]{36}>/edit' => 'document/update',
     'POST documents/<id:[0-9a-fA-F-]{36}>/archive' => 'document/archive',
     'POST documents/<documentId:[0-9a-fA-F-]{36}>/attachments' => 'attachment/upload',
