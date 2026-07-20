@@ -34,7 +34,7 @@ final class UserForm extends Model
             [['role'], 'in', 'range' => ['owner', 'admin', 'member', 'viewer']],
             [['status'], 'in', 'range' => ['active', 'suspended']],
             [['password'], 'string', 'min' => 10, 'max' => 1024, 'skipOnEmpty' => true],
-            [['password'], 'required', 'when' => fn (): bool => $this->id === null, 'whenClient' => 'function () { return true; }'],
+            [['password'], 'required', 'when' => fn (): bool => $this->id === null, 'enableClientValidation' => false],
             [['passwordRepeat'], 'compare', 'compareAttribute' => 'password', 'message' => 'Пароли не совпадают.'],
         ];
     }
