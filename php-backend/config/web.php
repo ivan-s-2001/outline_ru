@@ -69,6 +69,10 @@ $components = [
             'POST comments/<id:[0-9a-fA-F-]{36}>/resolve' => 'comment/resolve',
             'POST comments/<id:[0-9a-fA-F-]{36}>/delete' => 'comment/delete',
 
+            'GET admin/users' => 'user/index',
+            'GET,POST admin/users/create' => 'user/create',
+            'GET,POST admin/users/<id:[0-9a-fA-F-]{36}>' => 'user/update',
+
             'GET admin/groups' => 'group/index',
             'GET,POST admin/groups/create' => 'group/create',
             'GET admin/groups/<id:[0-9a-fA-F-]{36}>' => 'group/view',
