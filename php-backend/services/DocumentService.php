@@ -1,11 +1,13 @@
 <?php
 
 declare(strict_types=1);
+
 namespace app\services;
 
 use app\models\Document;
 use app\models\Revision;
 use app\models\User;
+use JsonException;
 use RuntimeException;
 use Throwable;
 use Yii;
@@ -15,6 +17,10 @@ final class DocumentService
     public function save(Document $document, User $user): Document
     {
         $created = $document->isNewRecord;
+        $previousContent = $created
+            ? []
+            : $this->decodeContent($document->getOldAttribute('content_json'));
+
         if ($created) {
             $document->workspace_id = $user->workspace_id;
             $document->created_by_id = $user->id;
@@ -43,6 +49,7 @@ final class DocumentService
             }
 
             $transaction->commit();
+
             (new AuditService())->record(
                 (string)$document->workspace_id,
                 $created ? 'document.created' : 'document.updated',
@@ -55,12 +62,34 @@ final class DocumentService
                     'revision' => (int)$document->revision_number,
                 ]
             );
+            (new NotificationService())->syncDocumentMentions(
+                $document,
+                $user,
+                $previousContent
+            );
+
             return $document;
         } catch (Throwable $error) {
             if ($transaction->isActive) {
                 $transaction->rollBack();
             }
             throw $error;
+        }
+    }
+
+    private function decodeContent(mixed $value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+        if (!is_string($value) || trim($value) === '') {
+            return [];
+        }
+        try {
+            $decoded = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+            return is_array($decoded) ? $decoded : [];
+        } catch (JsonException) {
+            return [];
         }
     }
 
