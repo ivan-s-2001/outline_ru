@@ -25,6 +25,36 @@
     synchronize();
   };
 
+  document.addEventListener("click", async (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+    const button = target.closest("[data-copy-target]");
+    if (!(button instanceof HTMLButtonElement)) {
+      return;
+    }
+
+    const selector = button.dataset.copyTarget;
+    const source = selector ? document.querySelector(selector) : null;
+    if (!(source instanceof HTMLInputElement || source instanceof HTMLTextAreaElement)) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(source.value);
+      const previous = button.textContent;
+      button.textContent = "Скопировано";
+      setTimeout(() => {
+        button.textContent = previous;
+      }, 1600);
+    } catch (_error) {
+      source.focus();
+      source.select();
+      document.execCommand("copy");
+    }
+  });
+
   document.addEventListener("submit", (event) => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement) || !form.checkValidity()) {
