@@ -56,10 +56,10 @@ final class AttachmentStorage
     public function absolutePath(string $storageKey): string
     {
         $normalized = str_replace(['\\', '..'], ['/', ''], $storageKey);
-        $base = (string)env(
-            'ATTACHMENT_STORAGE_PATH',
-            Yii::getAlias('@runtime/storage/attachments')
-        );
+        $configured = trim((string)env('ATTACHMENT_STORAGE_PATH', ''));
+        $base = $configured !== ''
+            ? $configured
+            : Yii::getAlias('@runtime/storage/attachments');
         return rtrim($base, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($normalized, '/'));
     }
 
