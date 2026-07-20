@@ -9,6 +9,7 @@ new yii\console\Application([
     'basePath' => dirname(__DIR__),
     'language' => 'ru-RU',
     'components' => [
+        'db' => require dirname(__DIR__) . '/config/db.php',
         'cache' => ['class' => yii\caching\ArrayCache::class],
         'security' => ['class' => yii\base\Security::class],
     ],
