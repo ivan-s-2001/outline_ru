@@ -9,6 +9,7 @@ return [
     'POST logout' => 'site/logout',
     'GET dashboard' => 'site/dashboard',
     'GET search' => 'search/index',
+    'GET,POST import' => 'import/document',
     'GET s/<token:[0-9a-f]{64}>' => 'public/share',
     'GET attachments/<id:[0-9a-fA-F-]{36}>' => 'attachment/download',
     'POST attachments/<id:[0-9a-fA-F-]{36}>/delete' => 'attachment/delete',
