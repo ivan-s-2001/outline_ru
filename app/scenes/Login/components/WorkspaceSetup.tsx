@@ -16,6 +16,9 @@ import { Form } from "~/components/primitives/Form";
 
 const WorkspaceSetup = ({ onBack }: { onBack?: () => void }) => {
   const { t } = useTranslation();
+  const fullNameHint = t(
+    "Пишите ФИО через пробел: фамилия имя отчество"
+  );
 
   return (
     <Background>
@@ -43,13 +46,23 @@ const WorkspaceSetup = ({ onBack }: { onBack?: () => void }) => {
             autoFocus
             flex
           />
-          <Input
-            name="userName"
-            type="text"
-            label={t("Admin name")}
-            required
-            flex
-          />
+          <FullNameField column gap={4}>
+            <Input
+              name="userName"
+              type="text"
+              label={t("ФИО администратора")}
+              placeholder={t("Иванов Иван Иванович")}
+              pattern="\\S+\\s+\\S+\\s+\\S+(?:\\s+\\S+)*"
+              title={fullNameHint}
+              aria-describedby="admin-full-name-hint"
+              margin={0}
+              required
+              flex
+            />
+            <NameHint id="admin-full-name-hint" type="secondary">
+              {fullNameHint}
+            </NameHint>
+          </FullNameField>
           <Input
             name="userEmail"
             type="email"
@@ -69,6 +82,15 @@ const WorkspaceSetup = ({ onBack }: { onBack?: () => void }) => {
 const Inputs = styled(Flex)`
   width: 100%;
   text-align: left;
+`;
+
+const FullNameField = styled(Flex)`
+  width: 100%;
+`;
+
+const NameHint = styled(Text)`
+  margin: 0;
+  font-size: 12px;
 `;
 
 const StyledHeading = styled(Heading)`

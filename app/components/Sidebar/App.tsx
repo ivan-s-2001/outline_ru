@@ -1,5 +1,10 @@
 import { observer } from "mobx-react";
-import { SearchIcon, HomeIcon, SidebarIcon } from "outline-icons";
+import {
+  CalendarIcon,
+  SearchIcon,
+  HomeIcon,
+  SidebarIcon,
+} from "outline-icons";
 import { useEffect, useState, useCallback, useRef } from "react";
 import {
   DragActiveProvider,
@@ -16,7 +21,7 @@ import useCurrentUser from "~/hooks/useCurrentUser";
 import usePolicy from "~/hooks/usePolicy";
 import useStores from "~/hooks/useStores";
 import TeamMenu from "~/menus/TeamMenu";
-import { homePath, searchPath } from "~/utils/routeHelpers";
+import { homePath, schedulePath, searchPath } from "~/utils/routeHelpers";
 import TeamLogo from "../TeamLogo";
 import Tooltip from "../Tooltip";
 import Sidebar from "./Sidebar";
@@ -110,6 +115,12 @@ function AppSidebar() {
               icon={<HomeIcon />}
               exact={false}
               label={t("Home")}
+            />
+            <SidebarLink
+              to={schedulePath("week")}
+              icon={<CalendarIcon />}
+              exact={false}
+              label="График"
             />
             <SidebarLink
               to={searchPath()}

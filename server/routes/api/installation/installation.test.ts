@@ -6,6 +6,8 @@ import { getTestServer, setSelfHosted } from "@server/test/support";
 setSelfHosted();
 const server = getTestServer();
 
+const userFullName = "Иванов Иван Иванович";
+
 describe("installation.create", () => {
   // Skipped in CI because tests run in parallel and this requires a clean database state.
   it.skip("should create a team when no teams exist", async () => {
@@ -16,7 +18,7 @@ describe("installation.create", () => {
     const res = await server.post("/api/installation.create", {
       body: {
         teamName: faker.company.name(),
-        userName: faker.person.fullName(),
+        userName: userFullName,
         userEmail: faker.internet.email().toLowerCase(),
       },
       redirect: "manual",
@@ -31,7 +33,7 @@ describe("installation.create", () => {
     const res = await server.post("/api/installation.create", {
       body: {
         teamName: faker.company.name(),
-        userName: faker.person.fullName(),
+        userName: userFullName,
         userEmail: faker.internet.email().toLowerCase(),
       },
     });
@@ -51,6 +53,22 @@ describe("installation.create", () => {
     });
 
     expect(res.status).toEqual(400);
+  });
+
+  it("should require surname, first name, and middle name", async () => {
+    const res = await server.post("/api/installation.create", {
+      body: {
+        teamName: faker.company.name(),
+        userName: "Иванов Иван",
+        userEmail: faker.internet.email().toLowerCase(),
+      },
+    });
+
+    expect(res.status).toEqual(400);
+    const body = await res.json();
+    expect(body.message).toContain(
+      "Пишите ФИО через пробел: фамилия имя отчество"
+    );
   });
 });
 

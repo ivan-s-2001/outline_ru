@@ -4,6 +4,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { errToString } from "@shared/utils/error";
 import { UserRole } from "@shared/types";
+import { formatUserName, splitUserName } from "@shared/utils/userName";
 import { UserValidation } from "@shared/validations";
 import type User from "~/models/User";
 import Button from "~/components/Button";
@@ -112,37 +113,73 @@ export function UserSuspendDialog({ user, onSubmit }: Props) {
 
 export function UserChangeNameDialog({ user, onSubmit }: Props) {
   const { t } = useTranslation();
-  const [name, setName] = React.useState<string>(user.name);
+  const initialName = React.useMemo(() => splitUserName(user.name), [user.name]);
+  const [lastName, setLastName] = React.useState(initialName.lastName ?? "");
+  const [firstName, setFirstName] = React.useState(initialName.firstName);
+  const [middleName, setMiddleName] = React.useState(
+    initialName.middleName ?? ""
+  );
 
   const handleSubmit = async () => {
-    await user.save({ name });
+    await user.save({
+      name: formatUserName({ lastName, firstName, middleName }),
+    });
     onSubmit();
   };
 
-  const handleChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
-    setName(ev.target.value);
-  };
+  const isValid = Boolean(
+    lastName.trim() && firstName.trim() && middleName.trim()
+  );
 
   return (
     <ConfirmationDialog
       onSubmit={handleSubmit}
       submitText={t("Save")}
       savingText={`${t("Saving")}…`}
-      disabled={!name}
+      disabled={!isValid}
     >
-      <Input
-        type="text"
-        name="name"
-        label={t("New name")}
-        onChange={handleChange}
-        error={!name ? t("Name can't be empty") : undefined}
-        value={name}
-        maxLength={UserValidation.maxNameLength}
-        showCharacterCount
-        autoSelect
-        required
-        flex
-      />
+      <Flex column gap={8}>
+        <Input
+          type="text"
+          name="lastName"
+          label={t("Фамилия")}
+          onChange={(ev) => setLastName(ev.target.value)}
+          error={!lastName.trim() ? t("Фамилия обязательна") : undefined}
+          value={lastName}
+          maxLength={UserValidation.maxNameLength}
+          autoComplete="family-name"
+          showCharacterCount
+          autoFocus
+          required
+          flex
+        />
+        <Input
+          type="text"
+          name="firstName"
+          label={t("Имя")}
+          onChange={(ev) => setFirstName(ev.target.value)}
+          error={!firstName.trim() ? t("Имя обязательно") : undefined}
+          value={firstName}
+          maxLength={UserValidation.maxNameLength}
+          autoComplete="given-name"
+          showCharacterCount
+          required
+          flex
+        />
+        <Input
+          type="text"
+          name="middleName"
+          label={t("Отчество")}
+          onChange={(ev) => setMiddleName(ev.target.value)}
+          error={!middleName.trim() ? t("Отчество обязательно") : undefined}
+          value={middleName}
+          maxLength={UserValidation.maxNameLength}
+          autoComplete="additional-name"
+          showCharacterCount
+          required
+          flex
+        />
+      </Flex>
     </ConfirmationDialog>
   );
 }

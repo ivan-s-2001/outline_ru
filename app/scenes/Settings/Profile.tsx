@@ -4,6 +4,7 @@ import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { errToString } from "@shared/utils/error";
+import { formatUserName, splitUserName } from "@shared/utils/userName";
 import Button from "~/components/Button";
 import Heading from "~/components/Heading";
 import Input from "~/components/Input";
@@ -21,14 +22,25 @@ const Profile = () => {
   const user = useCurrentUser();
   const { dialogs } = useStores();
   const form = React.useRef<HTMLFormElement>(null);
-  const [name, setName] = React.useState<string>(user.name);
+  const initialName = React.useMemo(() => splitUserName(user.name), [user.name]);
+  const [lastName, setLastName] = React.useState(initialName.lastName ?? "");
+  const [firstName, setFirstName] = React.useState(initialName.firstName);
+  const [middleName, setMiddleName] = React.useState(
+    initialName.middleName ?? ""
+  );
   const { t } = useTranslation();
 
   const handleSubmit = async (ev: React.SyntheticEvent) => {
     ev.preventDefault();
 
     try {
-      await user.save({ name });
+      await user.save({
+        name: formatUserName({
+          lastName,
+          firstName,
+          middleName,
+        }),
+      });
       toast.success(t("Profile saved"));
     } catch (err) {
       toast.error(errToString(err));
@@ -42,10 +54,6 @@ const Profile = () => {
         <UserChangeEmailDialog user={user} onSubmit={dialogs.closeAllModals} />
       ),
     });
-  };
-
-  const handleNameChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
-    setName(ev.target.value);
   };
 
   const handleAvatarChange = async (avatarUrl: string) => {
@@ -81,18 +89,41 @@ const Profile = () => {
           />
         </SettingRow>
         <SettingRow
-          border={env.EMAIL_ENABLED}
-          label={t("Name")}
-          name="name"
-          description={t(
-            "This could be your real name, or a nickname — however you’d like people to refer to you."
-          )}
+          label={t("Фамилия")}
+          name="lastName"
+          description={t("ФИО отображается в профиле, документах и графике.")}
         >
           <Input
-            id="name"
-            autoComplete="name"
-            value={name}
-            onChange={handleNameChange}
+            id="lastName"
+            autoComplete="family-name"
+            value={lastName}
+            onChange={(ev) => setLastName(ev.target.value)}
+            maxLength={UserValidation.maxNameLength}
+            showCharacterCount
+            required
+          />
+        </SettingRow>
+        <SettingRow label={t("Имя")} name="firstName">
+          <Input
+            id="firstName"
+            autoComplete="given-name"
+            value={firstName}
+            onChange={(ev) => setFirstName(ev.target.value)}
+            maxLength={UserValidation.maxNameLength}
+            showCharacterCount
+            required
+          />
+        </SettingRow>
+        <SettingRow
+          border={env.EMAIL_ENABLED}
+          label={t("Отчество")}
+          name="middleName"
+        >
+          <Input
+            id="middleName"
+            autoComplete="additional-name"
+            value={middleName}
+            onChange={(ev) => setMiddleName(ev.target.value)}
             maxLength={UserValidation.maxNameLength}
             showCharacterCount
             required

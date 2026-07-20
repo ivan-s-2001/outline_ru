@@ -33,6 +33,18 @@ class User extends ParanoidModel implements Searchable {
 
   @Field
   @observable
+  lastName?: string | null;
+
+  @Field
+  @observable
+  firstName?: string;
+
+  @Field
+  @observable
+  middleName?: string | null;
+
+  @Field
+  @observable
   color: string;
 
   @Field
@@ -81,7 +93,14 @@ class User extends ParanoidModel implements Searchable {
 
   @computed
   get searchContent(): string[] {
-    return [this.name, this.email, this.initials].filter(Boolean);
+    return [
+      this.name,
+      this.lastName,
+      this.firstName,
+      this.middleName,
+      this.email,
+      this.initials,
+    ].filter(Boolean) as string[];
   }
 
   @computed
@@ -193,7 +212,6 @@ class User extends ParanoidModel implements Searchable {
   @computed
   get groupsWithDocumentMemberships() {
     const { groups, groupUsers } = this.store.rootStore;
-
     return groupUsers.orderedData
       .filter((groupUser) => groupUser.userId === this.id)
       .map((groupUser) => groups.get(groupUser.groupId))

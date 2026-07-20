@@ -3,6 +3,7 @@ import type {
   UserPreferences,
   UserRole,
 } from "@shared/types";
+import { splitUserName } from "@shared/utils/userName";
 import env from "@server/env";
 import type { User } from "@server/models";
 
@@ -14,6 +15,9 @@ type Options = {
 type UserPresentation = {
   id: string;
   name: string;
+  lastName: string | null;
+  firstName: string;
+  middleName: string | null;
   avatarUrl: string | null | undefined;
   createdAt: Date;
   updatedAt: Date;
@@ -33,9 +37,13 @@ export default function presentUser(
   user: User,
   options: Options = {}
 ): UserPresentation {
+  const { lastName, firstName, middleName } = splitUserName(user.name);
   const userData: UserPresentation = {
     id: user.id,
     name: user.name,
+    lastName,
+    firstName,
+    middleName,
     avatarUrl: user.avatarUrl,
     color: user.color,
     role: user.role,

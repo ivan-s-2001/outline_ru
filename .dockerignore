@@ -4,6 +4,9 @@
 .circleci
 .DS_Store
 .env*
+docker.env
+docker.env.*
+backups
 .eslint*
 .oxlintrc*
 .log
@@ -15,6 +18,8 @@ crowdin.yml
 lint-staged.config.mjs
 build
 docker-compose.yml
+docker-compose.ru.yml
+docker/windows
 node_modules
 .yarn
 **/*.test.ts

@@ -33,6 +33,7 @@ import { MentionType } from "@shared/types";
 import { toISODate } from "@shared/utils/date";
 import { metaDisplay } from "@shared/utils/keyboard";
 import Desktop from "~/utils/Desktop";
+import customBlockMenuItems from "./custom";
 
 const Img = styled(Image)`
   border-radius: 2px;
@@ -265,6 +266,7 @@ export default function blockMenuItems(
       keywords: "notice card suggestion",
       attrs: { style: "tip" },
     },
+    ...customBlockMenuItems(t, documentRef),
     {
       name: "separator",
     },
