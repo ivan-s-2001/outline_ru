@@ -38,6 +38,7 @@ $route = Yii::$app->controller->route;
             <a class="nav-link <?= str_starts_with($route, 'import/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/import/document']) ?>">Импорт</a>
             <a class="nav-link <?= str_starts_with($route, 'template/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/template/index']) ?>">Шаблоны</a>
             <a class="nav-link <?= str_starts_with($route, 'search/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/search/index']) ?>">Поиск</a>
+            <a class="nav-link <?= str_starts_with($route, 'api-key/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/api-key/index']) ?>">API-ключи</a>
             <a class="nav-link text-body" href="#">График</a>
             <a class="nav-link text-body" href="#">Отпуска</a>
             <a class="nav-link text-body" href="#">Дежурства</a>
@@ -46,6 +47,7 @@ $route = Yii::$app->controller->route;
                 <div class="small text-uppercase text-body-secondary fw-semibold mt-4 mb-1 px-2">Администрирование</div>
                 <a class="nav-link <?= str_starts_with($route, 'user/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/user/index']) ?>">Пользователи</a>
                 <a class="nav-link <?= str_starts_with($route, 'group/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/group/index']) ?>">Группы</a>
+                <a class="nav-link <?= str_starts_with($route, 'audit/') ? 'active' : 'text-body' ?>" href="<?= Url::to(['/audit/index']) ?>">Аудит</a>
             <?php endif; ?>
         </nav>
         <?php if ($currentUser): ?>
@@ -67,6 +69,7 @@ $route = Yii::$app->controller->route;
 
         <main class="container-fluid app-content py-4 px-3 px-md-4">
             <?php foreach (Yii::$app->session->getAllFlashes() as $type => $message): ?>
+                <?php if ($type === 'apiKeySecret') { continue; } ?>
                 <div class="alert alert-<?= Html::encode($type === 'error' ? 'danger' : $type) ?> alert-dismissible fade show" role="alert">
                     <?= Html::encode((string)$message) ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
@@ -90,10 +93,12 @@ $route = Yii::$app->controller->route;
             <a class="nav-link" href="<?= Url::to(['/import/document']) ?>">Импорт</a>
             <a class="nav-link" href="<?= Url::to(['/template/index']) ?>">Шаблоны</a>
             <a class="nav-link" href="<?= Url::to(['/search/index']) ?>">Поиск</a>
+            <a class="nav-link" href="<?= Url::to(['/api-key/index']) ?>">API-ключи</a>
             <?php if ($currentUser?->isAdmin()): ?>
                 <hr>
                 <a class="nav-link" href="<?= Url::to(['/user/index']) ?>">Пользователи</a>
                 <a class="nav-link" href="<?= Url::to(['/group/index']) ?>">Группы</a>
+                <a class="nav-link" href="<?= Url::to(['/audit/index']) ?>">Аудит</a>
             <?php endif; ?>
         </nav>
     </div>
