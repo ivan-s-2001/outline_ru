@@ -14,6 +14,16 @@ export function homePath(): string {
 }
 
 /**
+ * Returns the path to the schedule screen.
+ *
+ * @param view optional schedule view.
+ * @returns the schedule path.
+ */
+export function schedulePath(view?: "week" | "month"): string {
+  return view ? `/schedule/${view}` : "/schedule";
+}
+
+/**
  * Returns the location descriptor used to trigger a logout.
  *
  * @returns a location object with pathname and search.
@@ -114,7 +124,7 @@ export function collectionPath(
  * Returns the path to edit a collection's overview.
  *
  * @param collection the collection to edit.
- * @returns the path to the collection edit screen.
+ * @returns the collection edit screen.
  */
 export function collectionEditPath(collection: Collection): string {
   return collectionPath(collection, "overview/edit");
