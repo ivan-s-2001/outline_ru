@@ -89,6 +89,80 @@ body {
   box-shadow: var(--bs-box-shadow) !important;
 }
 
+.collection-icon {
+  --collection-color: #4e5c6e;
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--collection-color) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--collection-color) 28%, transparent);
+  font-size: 1.25rem;
+}
+
+.collection-icon-lg {
+  width: 56px;
+  height: 56px;
+  flex-basis: 56px;
+  border-radius: 1rem;
+  font-size: 1.55rem;
+}
+
+.collection-description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.document-form-shell,
+.document-view-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.editor-card {
+  min-height: 380px;
+}
+
+.outline-rich-editor:empty {
+  display: none;
+}
+
+.document-text-fallback {
+  min-height: 420px;
+  resize: vertical;
+  border: 0;
+  padding: 0;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  box-shadow: none !important;
+}
+
+.document-rendered-fallback {
+  min-height: 300px;
+  white-space: normal;
+  font-size: 1.06rem;
+  line-height: 1.75;
+}
+
+.sticky-save-bar {
+  position: sticky;
+  bottom: 1rem;
+  z-index: 20;
+  width: fit-content;
+  margin-left: auto;
+  padding: 0.65rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.75rem;
+  background: rgba(var(--bs-body-bg-rgb), 0.94);
+  box-shadow: var(--bs-box-shadow);
+  backdrop-filter: blur(8px);
+}
+
 .form-control:focus,
 .form-select:focus {
   box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.14);
@@ -103,5 +177,9 @@ body {
     width: 100%;
     margin-left: 0;
     transform: none;
+  }
+
+  .sticky-save-bar {
+    width: 100%;
   }
 }
