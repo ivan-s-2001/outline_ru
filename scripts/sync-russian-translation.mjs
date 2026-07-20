@@ -18,6 +18,18 @@ async function read(relativePath) {
   return fs.readFile(path.join(root, relativePath), "utf8");
 }
 
+async function fileExists(relativePath) {
+  try {
+    await fs.access(path.join(root, relativePath));
+    return true;
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
+}
+
 async function write(relativePath, content) {
   const target = path.join(root, relativePath);
   await fs.mkdir(path.dirname(target), { recursive: true });
@@ -81,12 +93,18 @@ async function connectRussianLocale() {
     (content) => content.includes('environment.DEFAULT_LANGUAGE ?? "ru_RU"')
   );
 
-  await ensureReplacement(
-    ".env.sample",
-    `DEFAULT_LANGUAGE=en_US`,
-    `DEFAULT_LANGUAGE=ru_RU`,
-    (content) => content.includes("DEFAULT_LANGUAGE=ru_RU")
-  );
+  for (const relativePath of [".env.sample", "docker.env.example"]) {
+    if (!(await fileExists(relativePath))) {
+      continue;
+    }
+
+    await ensureReplacement(
+      relativePath,
+      `DEFAULT_LANGUAGE=en_US`,
+      `DEFAULT_LANGUAGE=ru_RU`,
+      (content) => content.includes("DEFAULT_LANGUAGE=ru_RU")
+    );
+  }
 }
 
 function hasPluralTranslation(key, translation) {
