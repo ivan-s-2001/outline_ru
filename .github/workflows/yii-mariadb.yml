@@ -78,7 +78,19 @@ jobs:
         run: composer lint
 
       - name: Run MariaDB migrations
-        run: php yii migrate --interactive=0
+        shell: bash
+        run: |
+          set -o pipefail
+          php yii migrate --interactive=0 2>&1 | tee runtime/mariadb-migrate.log
+
+      - name: Upload MariaDB migration diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yii-mariadb-migrate-${{ github.run_id }}
+          path: php-backend/runtime/mariadb-migrate.log
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Run unit tests
         run: composer test
