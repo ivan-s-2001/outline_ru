@@ -6,6 +6,7 @@ namespace app\services;
 use app\models\Event;
 use app\models\User;
 use Yii;
+use yii\web\Request as WebRequest;
 
 final class AuditService
 {
@@ -16,10 +17,8 @@ final class AuditService
         ?string $modelId = null,
         array $data = []
     ): void {
-        $ip = null;
-        if (Yii::$app->has('request')) {
-            $ip = Yii::$app->request->userIP;
-        }
+        $request = Yii::$app->has('request') ? Yii::$app->request : null;
+        $ip = $request instanceof WebRequest ? $request->userIP : null;
 
         $event = new Event([
             'workspace_id' => $workspaceId,
@@ -40,10 +39,10 @@ final class AuditService
 
     private function sanitize(array $data): array
     {
-        $blocked = ['password', 'passwordHash', 'token', 'secret', 'authorization'];
+        $blocked = ['password', 'passwordhash', 'token', 'secret', 'authorization'];
         $result = [];
         foreach ($data as $key => $value) {
-            if (in_array(mb_strtolower((string)$key), array_map('mb_strtolower', $blocked), true)) {
+            if (in_array(mb_strtolower((string)$key), $blocked, true)) {
                 continue;
             }
             if (is_array($value)) {
