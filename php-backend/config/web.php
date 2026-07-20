@@ -52,12 +52,18 @@ $components = [
             'GET,POST login' => 'site/login',
             'POST logout' => 'site/logout',
             'GET dashboard' => 'site/dashboard',
+
             'GET collections' => 'collection/index',
             'GET,POST collections/create' => 'collection/create',
             'GET collections/<id:[0-9a-fA-F-]{36}>' => 'collection/view',
+            'GET,POST collections/<id:[0-9a-fA-F-]{36}>/edit' => 'collection/update',
+            'POST collections/<id:[0-9a-fA-F-]{36}>/archive' => 'collection/archive',
+
             'GET,POST documents/create' => 'document/create',
             'GET documents/<id:[0-9a-fA-F-]{36}>' => 'document/view',
             'GET,POST documents/<id:[0-9a-fA-F-]{36}>/edit' => 'document/update',
+            'POST documents/<id:[0-9a-fA-F-]{36}>/archive' => 'document/archive',
+
             'POST api/<method:[A-Za-z0-9._-]+>' => 'api/dispatch',
             'OPTIONS api/<method:[A-Za-z0-9._-]+>' => 'api/options',
         ],
