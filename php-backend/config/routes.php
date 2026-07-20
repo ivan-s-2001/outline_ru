@@ -1,0 +1,59 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'GET health' => 'site/health',
+    'GET,POST install' => 'site/install',
+    'GET,POST login' => 'site/login',
+    'POST logout' => 'site/logout',
+    'GET dashboard' => 'site/dashboard',
+    'GET search' => 'search/index',
+    'GET s/<token:[0-9a-f]{64}>' => 'public/share',
+    'GET attachments/<id:[0-9a-fA-F-]{36}>' => 'attachment/download',
+    'POST attachments/<id:[0-9a-fA-F-]{36}>/delete' => 'attachment/delete',
+
+    'GET collections' => 'collection/index',
+    'GET,POST collections/create' => 'collection/create',
+    'GET collections/<id:[0-9a-fA-F-]{36}>' => 'collection/view',
+    'GET,POST collections/<id:[0-9a-fA-F-]{36}>/edit' => 'collection/update',
+    'POST collections/<id:[0-9a-fA-F-]{36}>/archive' => 'collection/archive',
+    'GET collections/<id:[0-9a-fA-F-]{36}>/access' => 'access/collection',
+    'POST collections/<id:[0-9a-fA-F-]{36}>/access/grant' => 'access/grant-collection',
+    'POST collections/<id:[0-9a-fA-F-]{36}>/access/<permissionId:[0-9a-fA-F-]{36}>/delete' => 'access/revoke-collection',
+
+    'GET,POST documents/create' => 'document/create',
+    'GET documents/<id:[0-9a-fA-F-]{36}>' => 'document/view',
+    'GET,POST documents/<id:[0-9a-fA-F-]{36}>/edit' => 'document/update',
+    'POST documents/<id:[0-9a-fA-F-]{36}>/archive' => 'document/archive',
+    'POST documents/<documentId:[0-9a-fA-F-]{36}>/attachments' => 'attachment/upload',
+    'GET documents/<documentId:[0-9a-fA-F-]{36}>/history' => 'revision/index',
+    'GET revisions/<id:[0-9a-fA-F-]{36}>' => 'revision/view',
+    'POST revisions/<id:[0-9a-fA-F-]{36}>/restore' => 'revision/restore',
+    'GET documents/<documentId:[0-9a-fA-F-]{36}>/share' => 'share/manage',
+    'POST documents/<documentId:[0-9a-fA-F-]{36}>/share' => 'share/save',
+    'POST shares/<id:[0-9a-fA-F-]{36}>/revoke' => 'share/revoke',
+    'GET documents/<id:[0-9a-fA-F-]{36}>/access' => 'access/document',
+    'POST documents/<id:[0-9a-fA-F-]{36}>/access/grant' => 'access/grant-document',
+    'POST documents/<id:[0-9a-fA-F-]{36}>/access/<permissionId:[0-9a-fA-F-]{36}>/delete' => 'access/revoke-document',
+    'POST documents/<documentId:[0-9a-fA-F-]{36}>/comments' => 'comment/create',
+    'POST documents/<documentId:[0-9a-fA-F-]{36}>/comments/<parentId:[0-9a-fA-F-]{36}>/reply' => 'comment/create',
+    'POST comments/<id:[0-9a-fA-F-]{36}>/update' => 'comment/update',
+    'POST comments/<id:[0-9a-fA-F-]{36}>/resolve' => 'comment/resolve',
+    'POST comments/<id:[0-9a-fA-F-]{36}>/delete' => 'comment/delete',
+
+    'GET admin/users' => 'user/index',
+    'GET,POST admin/users/create' => 'user/create',
+    'GET,POST admin/users/<id:[0-9a-fA-F-]{36}>' => 'user/update',
+
+    'GET admin/groups' => 'group/index',
+    'GET,POST admin/groups/create' => 'group/create',
+    'GET admin/groups/<id:[0-9a-fA-F-]{36}>' => 'group/view',
+    'GET,POST admin/groups/<id:[0-9a-fA-F-]{36}>/edit' => 'group/update',
+    'POST admin/groups/<id:[0-9a-fA-F-]{36}>/delete' => 'group/delete',
+    'POST admin/groups/<id:[0-9a-fA-F-]{36}>/members' => 'group/add-member',
+    'POST admin/groups/<id:[0-9a-fA-F-]{36}>/members/<userId:[0-9a-fA-F-]{36}>/delete' => 'group/remove-member',
+
+    'POST api/<method:[A-Za-z0-9._-]+>' => 'api/dispatch',
+    'OPTIONS api/<method:[A-Za-z0-9._-]+>' => 'api/options',
+];
