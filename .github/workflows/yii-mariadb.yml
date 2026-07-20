@@ -93,4 +93,16 @@ jobs:
           retention-days: 3
 
       - name: Run unit tests
-        run: composer test
+        shell: bash
+        run: |
+          set -o pipefail
+          composer test 2>&1 | tee runtime/phpunit.log
+
+      - name: Upload PHPUnit diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yii-mariadb-phpunit-${{ github.run_id }}
+          path: php-backend/runtime/phpunit.log
+          if-no-files-found: ignore
+          retention-days: 3
