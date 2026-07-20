@@ -6,6 +6,7 @@ namespace app\controllers;
 
 use app\components\AuthenticatedController;
 use app\models\Collection;
+use app\models\Comment;
 use app\models\Document;
 use app\models\Revision;
 use app\services\DocumentService;
@@ -86,9 +87,40 @@ final class DocumentController extends AuthenticatedController
             ->limit(10)
             ->all();
 
+        $children = Document::find()
+            ->with('collection')
+            ->where([
+                'workspace_id' => $this->workspaceId(),
+                'parent_document_id' => $model->id,
+                'archived_at' => null,
+                'deleted_at' => null,
+            ])
+            ->orderBy(['sort_order' => SORT_ASC, 'title' => SORT_ASC])
+            ->all();
+        $children = array_values(array_filter(
+            $children,
+            fn (Document $document): bool => $permissions->canReadDocument($this->currentUser(), $document)
+        ));
+
+        $comments = Comment::find()
+            ->with(['user', 'replies.user'])
+            ->where([
+                'workspace_id' => $this->workspaceId(),
+                'document_id' => $model->id,
+                'parent_comment_id' => null,
+            ])
+            ->orderBy([
+                'resolved_at' => SORT_ASC,
+                'created_at' => SORT_ASC,
+            ])
+            ->all();
+
         return $this->render('view', [
             'model' => $model,
             'revisions' => $revisions,
+            'children' => $children,
+            'comments' => $comments,
+            'commentForm' => new Comment(),
             'canUpdate' => $permissions->canUpdateDocument($this->currentUser(), $model),
         ]);
     }
