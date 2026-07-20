@@ -66,13 +66,23 @@ type CollaborationTokenResponse = {
   };
 };
 
+type AttachmentResponse = {
+  data: {
+    id: string;
+    name: string;
+    contentType: string;
+    size: number;
+    url: string;
+  };
+};
+
 type EditorMountProps = {
   element: HTMLElement;
 };
 
 const coreExtensions = withComments(richExtensions);
 
-function csrfHeaders() {
+function csrfHeaders(): Record<string, string> {
   const csrfParam = document
     .querySelector<HTMLMetaElement>('meta[name="csrf-param"]')
     ?.getAttribute("content");
@@ -80,7 +90,14 @@ function csrfHeaders() {
     .querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
     ?.getAttribute("content");
 
-  return csrfParam && csrfToken ? { [csrfParam]: csrfToken } : {};
+  if (!csrfToken) {
+    return {};
+  }
+
+  return {
+    "X-CSRF-Token": csrfToken,
+    ...(csrfParam ? { [csrfParam]: csrfToken } : {}),
+  };
 }
 
 async function postJson<T>(url: string, body: object): Promise<T> {
@@ -101,6 +118,40 @@ async function postJson<T>(url: string, body: object): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+async function uploadEditorFile(
+  value: File | string,
+  documentId: string,
+  options?: { id?: string; onProgress?: (fractionComplete: number) => void }
+): Promise<string> {
+  if (!(value instanceof File)) {
+    throw new Error("Загрузка файла по внешнему URL пока не поддерживается");
+  }
+
+  const body = new FormData();
+  body.append("file", value, value.name);
+  options?.onProgress?.(0);
+
+  const response = await fetch(`/documents/${documentId}/attachments`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      Accept: "application/json",
+      ...csrfHeaders(),
+    },
+    body,
+  });
+  const payload = (await response.json().catch(() => undefined)) as
+    | AttachmentResponse
+    | { message?: string }
+    | undefined;
+  if (!response.ok || !payload || !("data" in payload)) {
+    throw new Error(payload && "message" in payload ? payload.message : `HTTP ${response.status}`);
+  }
+
+  options?.onProgress?.(1);
+  return payload.data.url;
 }
 
 function parseContent(element: HTMLElement) {
@@ -160,8 +211,8 @@ function LocalEditor({ element }: EditorMountProps) {
   const defaultValue = useMemo(() => parseContent(element), [element]);
 
   useEffect(() => {
-    setStatus(element, "Локальный редактор", "secondary");
-  }, [element]);
+    setStatus(element, readOnly ? "Просмотр" : "Локальный редактор", "secondary");
+  }, [element, readOnly]);
 
   return (
     <Editor
@@ -303,6 +354,7 @@ function CollaborativeEditor({ element }: EditorMountProps) {
       canUpdate={canUpdate}
       canComment
       userId={user.id}
+      uploadFile={(file, options) => uploadEditorFile(file, documentId, options)}
       placeholder="Введите / для вставки блока или начните писать…"
       onInit={() => {
         hideFallback();
@@ -324,10 +376,11 @@ function CollaborativeEditor({ element }: EditorMountProps) {
 
 function EditorMount({ element }: EditorMountProps) {
   const hasPersistedDocument = Boolean(element.dataset.documentId);
+  const collaborationEnabled = element.dataset.collaboration !== "false";
 
   return (
     <ThemeProvider theme={light}>
-      {hasPersistedDocument ? (
+      {hasPersistedDocument && collaborationEnabled ? (
         <CollaborativeEditor element={element} />
       ) : (
         <LocalEditor element={element} />
