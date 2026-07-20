@@ -17,7 +17,7 @@ final class Revision extends BaseRecord
     {
         return [
             [['document_id', 'user_id', 'title', 'revision_number'], 'required'],
-            [['content_json'], 'safe'],
+            [['content_json', 'yjs_state'], 'safe'],
             [['content_text'], 'string'],
             [['revision_number'], 'integer', 'min' => 0],
             [['document_id', 'user_id'], 'string', 'max' => 36],
