@@ -20,7 +20,7 @@ $components = [
         'identityClass' => User::class,
         'enableAutoLogin' => true,
         'loginUrl' => ['/site/login'],
-        'identityCookie' => ['name' => '_outline_identity', 'httpOnly' => true],
+        'identityCookie' => ['name' => '_outline_identity', 'httpOnly' => true, 'sameSite' => 'Lax'],
     ],
     'session' => [
         'name' => 'outline-php-session',
@@ -47,6 +47,7 @@ $components = [
             'documents/<id:\\d+>' => 'document/view',
             'documents/<id:\\d+>/edit' => 'document/update',
             'documents/<id:\\d+>/history' => 'document/history',
+            'documents/<document:\\d+>/collaboration-token' => 'collaboration/token',
             'search' => 'search/index',
             'schedule' => 'schedule/index',
             'vacation' => 'vacation/index',
